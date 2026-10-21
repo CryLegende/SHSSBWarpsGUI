@@ -90,11 +90,11 @@ public class ItemStackBuilder {
         if (itemMeta == null) return this;
         if (glow) {
             // Utiliser un enchantement moins commun pour éviter les conflits, mais Durability est standard.
-            Enchantment glowEnchant = Enchantment.LUCK; // Ou un autre qui n'a pas d'effet visible par défaut
+            Enchantment glowEnchant = Enchantment.LUCK_OF_THE_SEA; // Ou un autre qui n'a pas d'effet visible par défaut
             try { // Essayer LUCK, fallback sur DURABILITY si LUCK n'est pas disponible (versions plus anciennes)
-                glowEnchant = Enchantment.LUCK; // Spigot utilise ce nom pour Luck
+                glowEnchant = Enchantment.LUCK_OF_THE_SEA; // Spigot utilise ce nom pour Luck
             } catch (IllegalArgumentException e) {
-                glowEnchant = Enchantment.DURABILITY;
+                glowEnchant = Enchantment.UNBREAKING;
             }
             itemMeta.addEnchant(glowEnchant, 1, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
