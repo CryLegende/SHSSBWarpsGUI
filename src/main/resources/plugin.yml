@@ -1,0 +1,48 @@
+name: SHSSBWarpsGUI
+version: '${project.version}'
+main: org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI
+api-version: '1.20'
+author: Cry_Legende
+depend: [SuperiorSkyblock2, Vault] # PlaceholderAPI est une dépendance optionnelle (softdepend)
+softdepend: [PlaceholderAPI]
+
+commands:
+  # Commande pour l'édition des warps
+  is_edit:
+    description: Editer un de vos warps.
+    usage: "/is edit <warp> <option> [valeurs...]"
+    aliases: [island_edit] # Important de garder la cohérence avec /is et /island
+    permission: shssbwarpsgui.warp.edit
+
+  # Ancienne commande, maintenant pour l'administration
+  swgadmin:
+    description: Commandes d'administration pour SHSSBWarpsGUI.
+    usage: "/swgadmin <reload>"
+    permission: shssbwarpsgui.admin
+    aliases: [shssbwarps]
+
+permissions:
+  shssbwarpsgui.admin:
+    description: Permet d'utiliser les commandes d'administration comme /swgadmin reload.
+    default: op
+  shssbwarpsgui.use:
+    description: Permission de base pour utiliser le plugin.
+    default: true
+  shssbwarpsgui.warps.list.all:
+    description: Permet de voir la liste de tous les warps avec /is warps.
+    default: true
+  shssbwarpsgui.warps.list.other:
+    description: Permet de voir les warps d'un autre joueur avec /is warps <pseudo>.
+    default: true
+  shssbwarpsgui.warp.self:
+    description: Permet de voir ses propres warps avec /is warp.
+    default: true
+  shssbwarpsgui.warp.teleport:
+    description: Permet de se téléporter à ses propres warps avec /is warp <nom>.
+    default: true
+  shssbwarpsgui.warp.edit:
+    description: Permet d'éditer ses warps avec /is edit.
+    default: true
+  shssbwarpsgui.admin.editothers:
+    description: Permet d'éditer les warps d'autres joueurs (via le GUI de gestion).
+    default: op

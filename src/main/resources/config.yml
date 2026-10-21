@@ -1,0 +1,331 @@
+# Messages globaux du plugin
+messages:
+  no-permission-command: "&7&l« &f&lSH &8&l» &fCommande inconnue, essayez autre chose."
+  no-permission-feature: "&7&l« &c&lSH &8&l» &cVous ne pouvez pas mettre un warp en avant ou de gérer cette fonctionnalité."
+  player-only-command: "&7&l« &c&lSH &8&l» &cCette commande est réservée aux joueurs."
+  warp-not-found: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7est introuvable sur l'île."
+  island-not-found: "&7&l« &c&lSH &8&l» &cVous devez être sur une île ou l'île spécifiée est introuvable."
+  not-your-warp: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name%&7 ne vous appartient pas." # Placeholder %warp_name% est crucial ici
+  generic-error: "&7&l« &c&lSH &8&l» &cUne erreur est survenue. Veuillez réessayer ou contacter un administrateur."
+  teleporting: "&7&l« &a&lSH &8&l» &7Téléportation vers &e%warp_name%&7..." # Nouveau
+  teleport-warmup: "&7&l« &6&lSH &8&l» &7Téléportation dans &e%time% seconde(s)&7... Bougez pour annuler." # Nouveau, %time% sera remplacé
+  action-cancelled: "&7&l« &e&lSH &8&l» &cAction annulée." # Nouveau
+  pending-input-action-cancelled: "&7&l« &e&lSH &8&l» &7Saisie en attente annulée." # Nouveau
+  max-lore-lines-reached: "&7&l« &c&lSH &8&l» &7Vous avez atteint le nombre maximum de &c%max_lines% &7lignes pour la description." # %max_lines%
+  # Instructions pour PlayerChatInput (et commandes liées au ManageWarpGUI)
+  instruction-rename: "&7&l« &6&lSH &8&l» &7Tapez le nouveau nom pour le warp &e%warp_name% &7dans le chat. Longueur max: &6%max_length% caractères&7. Tapez '&cannuler&7' pour abandonner." # %warp_name%, %max_length%
+  instruction-seticon: "&7&l« &6&lSH &8&l» &7Placez l'item désiré dans votre main principale et tapez &e[/is editwarp %warp_name% confirmicon]&7. Tapez '&cannuler&7' pour abandonner cette action." # %command_confirm_icon% (sera /swg confirmicon %warp_name%)
+  instruction-setdesc: "&7&l« &6&lSH &8&l» &7Tapez la nouvelle description (lore) pour &e%warp_name%&7. Utilisez &6// &7pour une nouvelle ligne. Max &6%max_lines% lignes&7. Tapez '&afin&7' pour terminer, '&cclear&7' pour effacer, ou '&cannuler&7' pour abandonner." # %warp_name%, %max_lines%
+
+# Messages spécifiques à la gestion des warps (utilisés par ManageWarpGUI et commandes)
+manage-warp-messages:
+  renamed: "&7&l« &a&lSH &8&l» &7Le warp &e%old_warp_name% &7a été renommé en &6%new_warp_name%&7."
+  icon-set: "&7&l« &a&lSH &8&l» &7L'icône du warp &e%warp_name% &7a été mise à jour."
+  desc-set: "&7&l« &a&lSH &8&l» &7La description (lore) du warp &e%warp_name% &7a été mise à jour."
+  location-set: "&7&l« &a&lSH &8&l» &7La position du warp &e%warp_name% &7a été définie à votre emplacement actuel."
+  privacy-set: "&7&l« &a&lSH &8&l» &7La visibilité du warp &e%warp_name% &7est maintenant: %status%&7." # %status% sera &cPrivé ou &aPublic
+  deleted: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7a été supprimé avec succès."
+  delete-confirm-instruction: "&7&l« &c&lSH &8&l» &cÊtes-vous sûr de vouloir supprimer le warp '&e%warp_name%&c'?\n&cTapez &b/%label% deletewarp %warp_name% confirm &cpour confirmer."
+
+texture-service:
+  fetch-timeout:
+    connect: 5000
+    read: 7000
+
+main-gui:
+  title: "&8&lMenu &8| Warps des joueurs"
+  size: 54
+  default-click-sound: { sound: "UI_BUTTON_CLICK", volume: 1.0, pitch: 1.0 }
+  items:
+    filler_cadre_complet:
+      material: "GRAY_STAINED_GLASS_PANE"
+      name: "&r"
+      action: "NONE"
+      slots: ["0-8", "45-53", "9", "17", "18", "26", "27", "35", "36", "44"]
+    bouton_page_precedente:
+      material: "ARROW"
+      name-template: "&cPage Précédente" # Utiliser name-template pour cohérence
+      lore-template: []
+      action: "PREVIOUS_PAGE"
+      slots: "48"
+      click-sound: { sound: "ITEM_BOOK_PAGE_TURN", volume: 1.0, pitch: 0.8 }
+    bouton_retour_ile_main:
+      material: "PAPER"
+      name-template: "&C⤾ Retour &7(Clic)"
+      lore-template: []
+      action: "COMMAND"
+      command: "dm open island"
+      slots: "49"
+      click-sound: { sound: "ENTITY_ENDERMAN_TELEPORT", volume: 0.8, pitch: 1.0 }
+    bouton_page_suivante:
+      material: "ARROW"
+      name-template: "&aPage Suivante"
+      lore-template: []
+      action: "NEXT_PAGE"
+      slots: "50"
+      click-sound: { sound: "ITEM_BOOK_PAGE_TURN", volume: 1.0, pitch: 1.2 }
+  dynamic-item-template:
+    material: "PLAYER_HEAD"
+    name-template: "&fWarps de &e%player_name%"
+    lore-template: ["&6%warp_count% &8ᴡᴀʀᴘѕ ᴘᴜʙʟɪᴄѕ", "", "&7Statut: %online_status%", "", "&8&o(( &e&oCliquez pour voir les warps &8&o))"]
+    action: "OPEN_PLAYER_WARPS"
+    glow: false
+  featured-dynamic-item-template:
+    material: "PLAYER_HEAD"
+    name-template: "&5&lMise en Avant &8| &fWarps de &d%player_name%"
+    lore-template: ["&d%warp_count% &8ᴡᴀʀᴘѕ ᴘᴜʙʟɪᴄѕ", "", "&7Statut: %online_status%", "", "&8&o(( &d&oCliquez pour voir les warps &8&o))"]
+    action: "OPEN_PLAYER_WARPS"
+    glow: true # S'assurer que le glow est bien true pour les featured
+    # glow-explicitly-false: false # S'il faut que le glow du template featured soit désactivable depuis la config
+  dynamic-slots: ["10-16", "19-25", "28-34", "37-43"]
+
+visit-counter:
+  enabled: true
+  # Cooldown en secondes avant qu'un même joueur puisse incrémenter à nouveau le compteur d'un même warp.
+  cooldown-seconds: 60
+  # Les membres de l'île ne peuvent pas augmenter le compteur de leur propre île (codé en dur).
+
+favorites:
+  max-count: 5
+  lore-action: "&8&o(( &6&oShift-Clic pour mettre en favori &8&o))"
+  lore-action-remove: "&8&o(( &c&oShift-Clic pour retirer des favoris &8&o))"
+  messages:
+    added: "&7&l« &a&lSH &8&l» &aJoueur ajouté à vos favoris !"
+    removed: "&7&l« &e&lSH &8&l» &eJoueur retiré de vos favoris."
+    full: "&7&l« &c&lSH &8&l» &cVous avez atteint la limite de 5 favoris."
+  lore-indicator:
+    - ""
+    - "&e⭐ &6Dans vos favoris"
+  separator-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: "&r"
+    glow: false
+
+player-warps-gui:
+  title: "&8Warps de &l%target_player_name%"
+  size: 45
+  default-click-sound: { sound: "ENTITY_EXPERIENCE_ORB_PICKUP", volume: 0.7, pitch: 1.2 }
+  items:
+    filler_pwg_cadre:
+      material: "BLACK_STAINED_GLASS_PANE"
+      name-template: "&r"
+      action: "NONE"
+      slots: ["0-3", "5-8", "36-38", "42-44", "9", "17", "18", "26", "27", "35"]
+    player_info_head:
+      material: "PLAYER_HEAD"
+      name-template: "&eInformations sur l'île de %target_player_name%"
+      lore-template:
+        - ""
+        - "&7Note de l'île: &b%island_rating_formatted%"
+        - "&7Niveau: &b%island_level_formatted%"
+        - "&7Membres en ligne: &a%island_members_online%&7/&c%island_members_max%"
+        - ""
+      action: "PLAYER_INFO_HEAD" # Action spéciale pour l'identifier
+      slots: "4" # Slot du milieu en haut
+    bouton_page_precedente_pwg:
+      material: "ARROW"
+      name-template: "&cWarps Précédents"
+      action: "PREVIOUS_PAGE"
+      slots: "39"
+    bouton_retour_liste_pwg:
+      material: "BARRIER"
+      name-template: "&C⤾ Retour &7(Liste des joueurs)"
+      action: "BACK"
+      slots: "40"
+    bouton_page_suivante_pwg:
+      material: "ARROW"
+      name-template: "&aWarps Suivants"
+      action: "NEXT_PAGE"
+      slots: "41"
+  dynamic-item-template:
+    material: "ENDER_PEARL" # Peut être écrasé par l'icône du warp si définie
+    name-template: "&fWarp &6&l%warp_name%"
+    lore-template:
+      - ""
+      - "%warp_description_line_1%"
+      - "%warp_description_line_2%"
+      - "%warp_description_line_3%" # Ajouter plus de lignes si désiré
+      - ""
+      - "&7Visites: &e%warp_visit_count%"
+      - ""
+      - "&8&o(( &e&oClic Gauche pour s'y téléporter &8&o))"
+      - "&8&o(( &e&oClic Droit pour gérer &8&o))"
+    action: "TELEPORT_TO_WARP"
+    glow: false
+  featured-dynamic-item-template:
+    material: "NETHER_STAR" # Peut être écrasé par l'icône du warp
+    name-template: "&5&lEn Avant &8| &fWarp &d&l%warp_name%"
+    lore-template:
+      - "&8En avant jusqu'au &7%feature_expiry_date%"
+      - ""
+      - "%warp_description_line_1%"
+      - "%warp_description_line_2%"
+      - "%warp_description_line_3%"
+      - ""
+      - "&7Visites: &d%warp_visit_count%"
+      - ""
+      - "&8&o(( &5&oClic Gauche pour s'y téléporter &8&o))"
+      - "&8&o(( &5&oClic Droit pour gérer &8&o))"
+    action: "TELEPORT_TO_WARP"
+    glow: true # Par défaut pour les featured
+  dynamic-slots: ["10-16", "19-25", "28-34"]
+
+  # Ces boutons sont les TEMPLATES pour le GUI de confirmation de mise en avant
+  feature-this-warp-button:
+    material: "EMERALD_BLOCK"
+    name-template: "&aMise en avant de &8\"&2%warp_name%&8\""
+    lore-template:
+      - ""
+      - "&7Durée: &f%feature_duration_formatted%"
+      - "&7Coût: &e%cost% %vault_currency_name_plural%SHCoins"
+      - ""
+      - "&8&o(( &a&oCliquez pour acheter la mise en avant &8&o))"
+    action: "CONFIRM_FEATURE_THIS_WARP" # Action pour le clic sur CE bouton dans le GUI de confirmation
+    glow: true
+  unfeature-this-warp-button:
+    material: "REDSTONE_BLOCK"
+    name-template: "&cRetirer &8\"&4%warp_name%&8\" &cd'une mise en avant."
+    lore-template:
+      - "&8ᴄᴇ ᴡᴀʀᴘ ᴇѕᴛ ᴀᴄᴛᴜᴇʟʟᴇᴍᴇɴᴛ ᴍɪѕ ᴇɴ ᴀᴠᴀɴᴛ."
+      - ""
+      - "&7Expire le: &f%feature_expiry_date%"
+      - ""
+      - "&8&o(( &c&oCliquez pour retirer une mise en avant &8&o))"
+    action: "CONFIRM_UNFEATURE_THIS_WARP"
+    glow: false
+
+# --- Textes pour le GUI de Confirmation de Mise en Avant ---
+feature-confirmation-gui-texts:
+  title-feature: "&lWarps &8| Ajout Mise en avant" # %warp_name% peut être utilisé ici (géré par GuiListener)
+  title-unfeature: "&lWarps &8| Retrait Mise en avant"
+  cancel-button:
+    name: "&C⤾ Retour &7(Clic)"
+    lore:
+      - ""
+      - "&8ᴀᴜᴄᴜɴ ᴄʜᴀɴɢᴇᴍᴇɴᴛ ɴᴇ ѕᴇʀᴀ ᴀᴘᴘʟɪǫᴜᴇ."
+      - ""
+
+# --- GUI de Gestion d'un Warp Spécifique ---
+manage-warp-gui:
+  title: "&lWarps &r| Gérer &l%warp_name%"
+  size: 36
+  default-click-sound: { sound: "BLOCK_ANVIL_USE", volume: 1.0, pitch: 1.2 }
+  max-lore-lines: 5 # Nombre maximum de lignes pour la description /setdesc
+  items:
+    filler_manage_cadre:
+      material: "BLACK_STAINED_GLASS_PANE"
+      name-template: "&r" # ou name: "&r"
+      action: "NONE"
+      slots: ["0-8", "27-30", "32-35", "9", "17", "18", "26"] # Slots pour cadre avec bouton retour au centre bas
+
+    bouton_retour_manage:
+      material: "BARRIER"
+      name-template: "&C⤾ Retour &7(Liste des warps)"
+      action: "BACK"
+      slots: "31" # Centre bas pour size 36
+      click-sound: {sound: "UI_BUTTON_CLICK", volume: 1.0, pitch: 0.8}
+
+    bouton_set_icon_manage:
+      material: "ITEM_FRAME"
+      name-template: "&bModifier l'icône"
+      lore-template:
+        - ""
+        - "&7&l« &7Modifier l'icône affiché"
+        - "&7pour ce warp &8&l»"
+        - ""
+        - "&8&o(( &b&oCliquez pour changer l'icône &8&o))"
+      action: "EDIT_WARP_ICON"
+      slots: "10"
+    bouton_rename_warp_manage:
+      material: "NAME_TAG"
+      name-template: "&6Renommer le warp"
+      lore-template:
+        - ""
+        - "&7&l« &7Définir un nouveau nom"
+        - "&7visible pour ce warp &8&l»"
+        - ""
+        - "&7Nom actuel: &e%warp_name%"
+        - ""
+        - "&8&o(( &6&oCliquez pour changer le nom &8&o))"
+      action: "EDIT_WARP_NAME"
+      slots: "11"
+    bouton_set_description_manage:
+      material: "WRITABLE_BOOK"
+      name-template: "&2Modifier la Description"
+      lore-template:
+        - ""
+        - "&7&l« &7Ajouter une description"
+        - "&7utile pour ce warp &8&l»"
+        - ""
+        - "&8&o(( &2&oCliquez pour changer la description &8&o))"
+      action: "EDIT_WARP_DESCRIPTION"
+      slots: "12"
+    bouton_set_location_manage:
+      material: "COMPASS"
+      name-template: "&dRedéfinir la Position"
+      lore-template:
+        - ""
+        - "&7&l« &7Définir la position du warp"
+        - "&7à votre emplacement actuel. &8&l»"
+        - ""
+        - "&8&o(( &d&oCliquez pour moidifier la position &8&o))"
+      action: "EDIT_WARP_LOCATION"
+      slots: "13"
+    bouton_toggle_privacy_manage:
+      material: "%warp_status_material%" # Sera EMERALD_BLOCK ou REDSTONE_BLOCK
+      name-template: "&eModifier la visibilité" # %warp_status_text% : Sera "Rendre Public" ou "Rendre Privé"
+      lore-template:
+        - ""
+        - "&7&l« &7Modifier la visibilité"
+        - "&7de ce warp aux autres &8&l»"
+        - ""
+        - "&7Statut actuel: %warp_current_status%"
+        - ""
+        - "&8&o(( &e&oCliquez pour changer la visibilité &8&o))"
+      action: "TOGGLE_WARP_PRIVACY"
+      slots: "14"
+    bouton_manage_feature_manage:
+      material: "%feature_status_material%" # Sera GOLD_BLOCK ou IRON_BLOCK (ou configurable)
+      material-featured: "GOLD_BLOCK" # Optionnel: si vous voulez spécifier les matériaux ici
+      material-not-featured: "DIAMOND_BLOCK" # Optionnel
+      name-template: "&5Mise en avant du warp" # %feature_status_text%
+      lore-template:
+        - ""
+        - "&7&l« &7Gérer la mise en avant de ce warp &8&l»"
+        - ""
+        - "&7Coût: &d%feature_cost% %vault_currency_name_plural%SHCoins"
+        - "&7Durée: &f%feature_duration_formatted%"
+        - "&7Expire le: &f%feature_expiry_date%"
+        - ""
+        - "&8&o(( &5&oCliquez pour gérer la mise en avant &8&o))"
+      action: "MANAGE_WARP_FEATURE"
+      slots: "15"
+    bouton_delete_warp_manage:
+      material: "TNT"
+      name-template: "&cSupprimer le Warp"
+      lore-template:
+        - ""
+        - "&8• &4&lATTENTION &ccette action"
+        - "&cest irréversible !"
+        - ""
+        - "&8&o(( &c&oCliquez pour supprimer le warp &8&o))"
+      action: "DELETE_WARP_CONFIRM"
+      slots: "16"
+
+# --- Configuration de la Mise en Avant des Warps ---
+featured-warps:
+  enabled: true
+  cost: 50000.0 # Coût pour mettre en avant
+  duration: "3d" # Durée de la mise en avant (ex: 7d, 24h, 30m, 1w)
+  duration-format: "%d%j, %h%h, %m%m" # Format d'affichage de la durée. %j, %heure_s%, %minute_s% gèrent le pluriel.
+  date-format: "dd/MM/yyyy 'à' HH:mm:ss" # Format d'affichage des dates d'expiration
+  messages:
+    success: "&7&l« &a&lSH &8&l» &7Le warp &e%warp_name% &7maintenant mis en avant pour &6%duration%&7."
+    removed: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7n'est plus mis en avant."
+    not-enough-money: |-
+      &7&l« &c&lSH &8&l» &cVous n'avez pas assez d'argent.
+      &7&l« &c&lSH &8&l» &cIl vous faut &e%cost% SHCoins&c.
+    already-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' est déjà en avant. Il expire le: &e%feature_expiry_date%&c."
+    not-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' n'est pas mis en avant."
+    no-warps-to-feature: "&7&l« &c&lSH &8&l» &cVous n'avez aucun warp à mettre en avant." # Typiquement si un joueur essaie de mettre en avant mais n'a pas de warps
+    expired: "&7&l« &6&lSH &8&l» &6La mise en avant du warp '&e%warp_name%&6' de &e%owner_name%&6 a expiré."
