@@ -220,6 +220,10 @@ public class PlayerSpecificWarpsGUI extends BaseGUI {
     }
 
     public void refreshWarpsAndReopen() {
+        // le menu principal (bouton « Retour ») garderait sinon le nombre de warps d'avant la suppression
+        if (previousGui instanceof MainWarpsGUI mainGui) {
+            mainGui.refreshOwner(warpOwnerOffline.getUniqueId());
+        }
         SuperiorPlayer ssbOwner = SuperiorSkyblockAPI.getPlayers().getSuperiorPlayer(warpOwnerOffline.getUniqueId());
         if (ssbOwner != null && ssbOwner.getIsland() != null) {
             Island island = ssbOwner.getIsland();

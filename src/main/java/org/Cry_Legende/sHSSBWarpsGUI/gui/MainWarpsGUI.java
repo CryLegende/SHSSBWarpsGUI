@@ -1,5 +1,9 @@
 package org.Cry_Legende.sHSSBWarpsGUI.gui;
 
+import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
+import com.bgsoftware.superiorskyblock.api.island.Island;
+import com.bgsoftware.superiorskyblock.api.island.warps.IslandWarp;
+import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ItemConfig;
@@ -20,6 +24,45 @@ public class MainWarpsGUI extends BaseGUI {
 
     public MainWarpsGUI(SHSSBWarpsGUI plugin, Player viewer, List<WarpManager.PlayerWarpData> warpsData) {
         super(plugin, viewer, plugin.getConfigManager().mainGuiConfig, warpsData, null);
+    }
+
+    /**
+     * Met à jour la ligne d'un joueur après un changement de ses warps (suppression) : sans cela, le menu rouvert par
+     * « Retour » garderait le nombre de warps d'avant. Le joueur disparaît de la liste s'il n'a plus de warp public.
+     */
+    @SuppressWarnings("unchecked")
+    public void refreshOwner(UUID ownerId) {
+        if (itemsToDisplay == null) return;
+        List<WarpManager.PlayerWarpData> data = new ArrayList<>((List<WarpManager.PlayerWarpData>) itemsToDisplay);
+        int index = -1;
+        for (int i = 0; i < data.size(); i++) {
+            if (data.get(i).getOwner().getUniqueId().equals(ownerId)) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) return;
+
+        SuperiorPlayer superiorOwner = SuperiorSkyblockAPI.getPlayers().getSuperiorPlayer(ownerId);
+        Island island = superiorOwner == null ? null : superiorOwner.getIsland();
+        List<IslandWarp> publicWarps = island == null ? new ArrayList<>() : island.getIslandWarps().values().stream()
+            .filter(warp -> !warp.hasPrivateFlag())
+            .collect(Collectors.toList());
+
+        if (publicWarps.isEmpty()) {
+            data.remove(index);
+        } else {
+            WarpManager.PlayerWarpData old = data.get(index);
+            boolean featured = publicWarps.stream().anyMatch(warp -> plugin.getFeaturedWarpsManager().isFeatured(ownerId, warp.getName()));
+            data.set(index, new WarpManager.PlayerWarpData(old.getOwner(), publicWarps, old.isOnline(), featured));
+        }
+        itemsToDisplay = data;
+
+        // la dernière page peut ne plus exister
+        int perPage = guiConfig.dynamicItemSlots == null ? 0 : guiConfig.dynamicItemSlots.size();
+        if (perPage > 0 && currentPage > 0 && currentPage * perPage >= data.size()) {
+            currentPage = Math.max(0, (data.size() - 1) / perPage);
+        }
     }
 
     @Override
