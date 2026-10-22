@@ -113,14 +113,14 @@ public class PlayerChatInput implements Listener {
 
                 switch (actionInfo.type) {
                     case RENAME_WARP:
-                        int maxLength = plugin.getSuperiorSkyblock().getSettings().getIslandNames().getMaxLength();
-                        String strippedNewName = ChatColor.stripColor(ChatUtils.color(input));
+                        int maxLength = WarpRules.maxNameLength(plugin);
+                        WarpRules.RenameCheck renameCheck = WarpRules.checkRename(plugin, island, actionInfo.warp, input);
 
-                        if (input.isEmpty() || strippedNewName.length() > maxLength) {
+                        if (renameCheck == WarpRules.RenameCheck.INVALID) {
                             ChatUtils.sendMessage(player, "&cLe nom du warp est invalide ou trop long (max " + maxLength + " caractères visibles). Réessayez ou tapez 'annuler'.");
                             return;
                         }
-                        if (island.getWarp(input) != null && !input.equalsIgnoreCase(actionInfo.warp.getName())) {
+                        if (renameCheck == WarpRules.RenameCheck.EXISTS) {
                             ChatUtils.sendMessage(player, "&cUn warp nommé '&e" + input + "&c' existe déjà sur votre île. Réessayez ou tapez 'annuler'.");
                             return;
                         }
@@ -139,28 +139,7 @@ public class PlayerChatInput implements Listener {
                         int maxLoreLines = plugin.getConfig().getInt("manage-warp-gui.max-lore-lines", 5);
 
                         if (input.equalsIgnoreCase("fin")) {
-                            ItemStack currentIcon = actionInfo.warp.getRawIcon();
-                            if (currentIcon == null || currentIcon.getType() == Material.AIR) {
-                                currentIcon = new ItemStack(Material.PAPER);
-                                ItemMeta tempMeta = currentIcon.getItemMeta();
-                                if (tempMeta != null) {
-                                    tempMeta.setDisplayName(ChatUtils.color("&fWarp: &b" + actionInfo.warp.getName()));
-                                    currentIcon.setItemMeta(tempMeta);
-                                }
-                            }
-                            ItemMeta meta = currentIcon.getItemMeta();
-                            if (meta != null) {
-                                if (actionInfo.currentLoreInput.isEmpty()) {
-                                    meta.setLore(null);
-                                } else {
-                                    meta.setLore(ChatUtils.color(actionInfo.currentLoreInput));
-                                }
-                                currentIcon.setItemMeta(meta);
-                                actionInfo.warp.setIcon(currentIcon);
-
-                                messageToSend = cfgMgr.msgWarpDescSet.replace("%warp_name%", actionInfo.warp.getName());
-                                ChatUtils.sendMessage(player, messageToSend);
-                            }
+                            WarpRules.applyDescription(plugin, player, actionInfo.warp, actionInfo.currentLoreInput);
                             pendingActions.remove(playerId);
                         } else if (input.equalsIgnoreCase("clear")) {
                             actionInfo.currentLoreInput.clear();

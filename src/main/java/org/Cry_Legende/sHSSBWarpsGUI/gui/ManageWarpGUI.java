@@ -12,7 +12,9 @@ import org.Cry_Legende.sHSSBWarpsGUI.config.SoundConfig;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.FeaturedWarpsManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ItemStackBuilder;
+import org.Cry_Legende.sHSSBWarpsGUI.dialog.WarpDialogs;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerChatInput;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.WarpRules;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -158,20 +160,15 @@ public class ManageWarpGUI extends BaseGUI {
                 player.closeInventory();
                 break;
             case "EDIT_WARP_NAME":
-                messageToSend = cfgMgr.instructionRename
-                    .replace("%warp_name%", warpNameFromPDC)
-                    .replace("%max_length%", String.valueOf(plugin.getSuperiorSkyblock().getSettings().getIslandNames().getMaxLength()));
-                ChatUtils.sendMessage(player, messageToSend);
-                player.closeInventory();
-                PlayerChatInput.requestPlayerInput(player, PlayerChatInput.InputType.RENAME_WARP, this.warpToManage);
+                // client 1.21.6+ : dialogue natif ; sinon (ou dialogues désactivés) saisie dans le chat comme avant
+                if (!askRenameDialog(player)) {
+                    startChatRename(player, warpNameFromPDC);
+                }
                 break;
             case "EDIT_WARP_DESCRIPTION":
-                messageToSend = cfgMgr.instructionSetDesc
-                    .replace("%warp_name%", warpNameFromPDC)
-                    .replace("%max_lines%", String.valueOf(plugin.getConfig().getInt("manage-warp-gui.max-lore-lines", 5)));
-                ChatUtils.sendMessage(player, messageToSend);
-                player.closeInventory();
-                PlayerChatInput.requestPlayerInput(player, PlayerChatInput.InputType.SET_WARP_DESCRIPTION_LINE, this.warpToManage);
+                if (!askDescriptionDialog(player)) {
+                    startChatDescription(player, warpNameFromPDC);
+                }
                 break;
             case "EDIT_WARP_LOCATION":
                 this.warpToManage.setLocation(player.getLocation());
@@ -203,19 +200,7 @@ public class ManageWarpGUI extends BaseGUI {
                     ChatUtils.sendMessage(player, "&cErreur lors de la confirmation de suppression (incohérence de nom).");
                     return;
                 }
-                island.deleteWarp(warpNameToDelete);
-                // SuperiorSkyblockAPI.getSuperiorSkyblock().getGrid().saveIsland(this.island);
-                messageToSend = cfgMgr.msgWarpDeleted.replace("%warp_name%", warpNameToDelete);
-                ChatUtils.sendMessage(player, messageToSend);
-
-                // Revenir au GUI précédent (PlayerSpecificWarpsGUI) et le rafraîchir
-                if (previousGui instanceof PlayerSpecificWarpsGUI) {
-                    ((PlayerSpecificWarpsGUI) previousGui).refreshWarpsAndReopen();
-                } else if (previousGui != null) {
-                    previousGui.open(); // Fallback si ce n'est pas PlayerSpecificWarpsGUI
-                } else {
-                    player.closeInventory(); // Si pas de GUI précédent, fermer
-                }
+                deleteWarpAndReturn(player, warpNameToDelete);
                 break;
             default:
                 ChatUtils.sendMessage(player, "&cAction de gestion inconnue : " + action);
@@ -223,7 +208,97 @@ public class ManageWarpGUI extends BaseGUI {
         }
     }
 
+    // ------------------------------------------------------------------ saisies : dialogue natif ou chat
+
+    /**
+     * Saisie du nouveau nom dans le chat (clients sans dialogues, ou dialogues désactivés).
+     */
+    private void startChatRename(Player player, String warpName) {
+        String messageToSend = plugin.getConfigManager().instructionRename
+            .replace("%warp_name%", warpName)
+            .replace("%max_length%", String.valueOf(plugin.getSuperiorSkyblock().getSettings().getIslandNames().getMaxLength()));
+        ChatUtils.sendMessage(player, messageToSend);
+        player.closeInventory();
+        PlayerChatInput.requestPlayerInput(player, PlayerChatInput.InputType.RENAME_WARP, this.warpToManage);
+    }
+
+    /**
+     * Saisie de la description dans le chat (clients sans dialogues, ou dialogues désactivés).
+     */
+    private void startChatDescription(Player player, String warpName) {
+        String messageToSend = plugin.getConfigManager().instructionSetDesc
+            .replace("%warp_name%", warpName)
+            .replace("%max_lines%", String.valueOf(plugin.getConfig().getInt("manage-warp-gui.max-lore-lines", 5)));
+        ChatUtils.sendMessage(player, messageToSend);
+        player.closeInventory();
+        PlayerChatInput.requestPlayerInput(player, PlayerChatInput.InputType.SET_WARP_DESCRIPTION_LINE, this.warpToManage);
+    }
+
+    /**
+     * @return true si le dialogue de renommage est parti (le joueur n'a alors plus rien à faire dans le chat)
+     */
+    private boolean askRenameDialog(Player player) {
+        WarpDialogs dialogs = plugin.getWarpDialogs();
+        if (dialogs == null || !dialogs.supported(player)) {
+            return false;
+        }
+        player.closeInventory();
+        return dialogs.askRename(player, this.warpToManage, () -> startChatRename(player, this.warpToManage.getName()));
+    }
+
+    private boolean askDescriptionDialog(Player player) {
+        WarpDialogs dialogs = plugin.getWarpDialogs();
+        if (dialogs == null || !dialogs.supported(player)) {
+            return false;
+        }
+        player.closeInventory();
+        return dialogs.askDescription(player, this.warpToManage, () -> startChatDescription(player, this.warpToManage.getName()));
+    }
+
+    /**
+     * Supprime le warp puis revient à la liste des warps (suppression confirmée par le menu ou par le dialogue).
+     */
+    private void deleteWarpAndReturn(Player player, String warpNameToDelete) {
+        island.deleteWarp(warpNameToDelete);
+        // SuperiorSkyblockAPI.getSuperiorSkyblock().getGrid().saveIsland(this.island);
+        String messageToSend = plugin.getConfigManager().msgWarpDeleted.replace("%warp_name%", warpNameToDelete);
+        ChatUtils.sendMessage(player, messageToSend);
+
+        // Revenir au GUI précédent (PlayerSpecificWarpsGUI) et le rafraîchir
+        if (previousGui instanceof PlayerSpecificWarpsGUI) {
+            ((PlayerSpecificWarpsGUI) previousGui).refreshWarpsAndReopen();
+        } else if (previousGui != null) {
+            previousGui.open(); // Fallback si ce n'est pas PlayerSpecificWarpsGUI
+        } else {
+            player.closeInventory(); // Si pas de GUI précédent, fermer
+        }
+    }
+
+    /**
+     * Oui, dans le dialogue de suppression : revérifie que le warp existe toujours et que le joueur peut le supprimer.
+     */
+    private void confirmDeleteFromDialog(Player player) {
+        IslandWarp current = WarpRules.resolveForEdit(plugin, player, this.warpToManage);
+        if (current == null) {
+            return;
+        }
+        deleteWarpAndReturn(player, current.getName());
+    }
+
     private void openDeleteConfirmationGUI(Player player) {
+        // Client 1.21.6+ : dialogue de confirmation natif ; sinon (ou dialogues désactivés) le menu ci-dessous
+        WarpDialogs dialogs = plugin.getWarpDialogs();
+        if (dialogs != null && dialogs.supported(player)) {
+            player.closeInventory();
+            if (dialogs.askDelete(player, this.warpToManage, this::open, this::confirmDeleteFromDialog,
+                () -> openDeleteConfirmationInventory(player))) {
+                return;
+            }
+        }
+        openDeleteConfirmationInventory(player);
+    }
+
+    private void openDeleteConfirmationInventory(Player player) {
         // Le GUI de confirmation est simple et peut rester codé ici pour l'instant
         // ou être rendu configurable si besoin (plus complexe)
         Inventory confirmDeleteInv = Bukkit.createInventory(

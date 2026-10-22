@@ -329,3 +329,56 @@ featured-warps:
     not-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' n'est pas mis en avant."
     no-warps-to-feature: "&7&l« &c&lSH &8&l» &cVous n'avez aucun warp à mettre en avant." # Typiquement si un joueur essaie de mettre en avant mais n'a pas de warps
     expired: "&7&l« &6&lSH &8&l» &6La mise en avant du warp '&e%warp_name%&6' de &e%owner_name%&6 a expiré."
+
+# --- Saisies par dialogue natif Minecraft (clients 1.21.6 et plus) ---
+# Renommer un warp, modifier sa description (champ multiligne) et confirmer sa suppression s'ouvrent dans une fenêtre
+# avec les boutons Valider / Annuler (Échap annule). Les clients plus anciens, ou actif: false, gardent exactement la
+# saisie dans le chat et le menu de confirmation d'avant. Les textes acceptent les codes & ;
+# %warp_name% = nom du warp, %max_length% = longueur maximale du nom, %max_lines% = lignes maximales de la description.
+dialogues:
+  actif: true
+  # Version de protocole minimale du client pour recevoir un dialogue (771 = 1.21.6).
+  # Sans ViaVersion sur le serveur, tous les clients ont la version du serveur et reçoivent le dialogue.
+  min-protocol: 771
+  # Durée de validité d'une fenêtre ouverte, en secondes : au-delà, le clic est refusé.
+  expiration: 600
+  boutons:
+    valider: "&a&lValider"
+    annuler: "&c&lAnnuler"
+  renommer:
+    titre: "&6&lRenommer le warp"
+    corps:
+      - "&7Warp actuel : &e%warp_name%"
+      - "&7Longueur maximale : &6%max_length% caractères visibles&7. Vous pouvez y inclure des &bcodes couleurs&7."
+    champ: "&fNouveau nom"
+    # nombre maximal de caractères saisis (codes couleurs compris), comme un message du chat
+    longueur-max: 256
+  description:
+    titre: "&2&lDescription du warp"
+    corps:
+      - "&7Warp : &e%warp_name%"
+      - "&7Une ligne de description par ligne du champ, &6%max_lines% lignes maximum&7. Chaque ligne est grise sauf si elle commence par un &bcode couleur&7."
+      - "&7Laissez le champ vide pour effacer la description."
+    champ: "&fDescription"
+    # nombre maximal de caractères d'une ligne, comme un message du chat
+    longueur-ligne-max: 256
+    # hauteur du champ, en pixels
+    hauteur: 100
+    # true : le champ contient la description actuelle, à modifier ; false : il démarre vide
+    pre-remplir: true
+  suppression:
+    titre: "&4&lSupprimer le warp ?"
+    corps:
+      - "&7Le warp &c%warp_name%&7 sera effacé."
+      - "&4Cette action est irréversible !"
+    oui: "&c&lOui, supprimer"
+    non: "&a&lNon, annuler"
+  # Erreurs affichées en rouge en tête de la fenêtre, qui se rouvre avec le texte déjà saisi
+  erreurs:
+    nom-invalide: "&cLe nom du warp est invalide ou trop long (max %max_length% caractères visibles)."
+    nom-existe: "&cUn warp nommé '&e%new_name%&c' existe déjà sur votre île."
+    description-trop-longue: "&cLa description est trop longue."
+    description-lignes: "&cVous avez atteint le nombre maximum de &e%max_lines% &clignes pour la description."
+  messages:
+    expire: "&7&l« &e&lSH &8&l» &7Cette fenêtre a &eexpiré&7, recommencez l'action."
+    erreur: "&7&l« &c&lSH &8&l» &7Une &cerreur &7est survenue, recommencez l'action."

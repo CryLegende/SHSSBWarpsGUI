@@ -5,6 +5,7 @@ import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
 import org.Cry_Legende.sHSSBWarpsGUI.commands.CommandManager;
 import org.Cry_Legende.sHSSBWarpsGUI.commands.SwgAdminCommand;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
+import org.Cry_Legende.sHSSBWarpsGUI.dialog.WarpDialogs;
 import org.Cry_Legende.sHSSBWarpsGUI.gui.GuiListener;
 import org.Cry_Legende.sHSSBWarpsGUI.hooks.PAPIHook;
 import org.Cry_Legende.sHSSBWarpsGUI.hooks.VaultHook;
@@ -33,6 +34,8 @@ public class SHSSBWarpsGUI extends JavaPlugin {
     private PAPIHook papiHook;
     private GuiListener guiListenerInstance;
     private PlayerChatInput playerChatInputListener;
+    // null sur un serveur sans dialogues (avant 1.21.6) : tout passe alors par le chat
+    private WarpDialogs warpDialogs;
 
     @Override
     public void onEnable() {
@@ -91,6 +94,9 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         if (playerChatInputListener != null) {
             PlayerChatInput.clearAllPendingActions();
         }
+        if (warpDialogs != null) {
+            warpDialogs.clear();
+        }
         getLogger().info("SHSSBWarpsGUI a été désactivé.");
     }
 
@@ -135,6 +141,15 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(this.guiListenerInstance, this);
 
         this.playerChatInputListener = new PlayerChatInput(this);
+
+        // Saisies par dialogue natif (clients 1.21.6+) ; indisponibles avant 1.21.6, le chat reste alors la seule saisie
+        try {
+            Class.forName("io.papermc.paper.event.player.PlayerCustomClickEvent");
+            this.warpDialogs = new WarpDialogs(this);
+        } catch (ClassNotFoundException | LinkageError e) {
+            this.warpDialogs = null;
+            getLogger().info("Dialogues indisponibles sur ce serveur : saisie dans le chat.");
+        }
     }
 
     // --- Getters pour accéder aux composants du plugin ---
@@ -181,5 +196,12 @@ public class SHSSBWarpsGUI extends JavaPlugin {
 
     public GuiListener getGuiListener() {
         return guiListenerInstance;
+    }
+
+    /**
+     * Saisies par dialogue natif, ou null si le serveur ne les gère pas.
+     */
+    public WarpDialogs getWarpDialogs() {
+        return warpDialogs;
     }
 }

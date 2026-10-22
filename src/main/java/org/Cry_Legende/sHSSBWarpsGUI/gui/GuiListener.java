@@ -201,6 +201,9 @@ public class GuiListener implements Listener {
                 PlayerChatInput.clearPendingAction(player);
                 ChatUtils.sendMessage(player, plugin.getConfigManager().msgPendingInputActionCancelled);
             }
+            if (plugin.getWarpDialogs() != null) {
+                plugin.getWarpDialogs().cancel(player);
+            }
         }
 
         switch (action.toUpperCase()) {

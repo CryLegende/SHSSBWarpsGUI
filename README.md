@@ -18,10 +18,24 @@ Menus des warps d'île SuperiorSkyblock2 : liste, téléportation, nom, icône e
 
 Utilisé sur : **Opale**.
 
+### Saisies par dialogue natif (clients 1.21.6 et plus)
+
+Depuis le menu de gestion d'un warp (clic droit sur le warp), les saisies qui passaient par le chat s'ouvrent dans une fenêtre Minecraft avec les boutons **Valider** et **Annuler** (Échap annule) :
+
+- **Renommer** : champ de texte prérempli avec le nom actuel, mêmes règles qu'avant (longueur visible maximale des noms d'île de SuperiorSkyblock2, nom déjà pris sur l'île).
+- **Description** : champ multiligne, une ligne de description par ligne du champ (le séparateur `//` du chat marche aussi), prérempli avec la description actuelle. Chaque ligne est grise sauf si elle commence par un code couleur, `manage-warp-gui.max-lore-lines` lignes au maximum ; un champ vide efface la description.
+- **Suppression** : fenêtre de confirmation Oui / Non à la place du menu de confirmation ; Non ou Échap revient au menu de gestion.
+
+Les erreurs s'affichent en rouge dans la fenêtre, qui se rouvre avec le texte déjà saisi. Mêmes messages de succès et mêmes droits qu'avant : le warp est revérifié au moment d'agir (île et warp toujours là, joueur membre de l'île ou `shssbwarpsgui.admin.editothers`).
+
+Les clients plus anciens, ou `dialogues.actif: false`, gardent exactement l'ancienne saisie dans le chat (`annuler`, `fin`, `clear`, `//`) et le menu de confirmation. Avec ViaVersion, le plugin lit la version du client (`dialogues.min-protocol`, 771 = 1.21.6) ; sans ViaVersion tous les clients reçoivent le dialogue. Le choix de l'icône (objet en main) et la mise en avant payante gardent leur fonctionnement.
+
+Chaque fenêtre porte un jeton secret à usage unique, valable `dialogues.expiration` secondes : un clic ancien, rejoué, forgé ou venant d'un autre joueur est ignoré.
+
 ## Dépendances
 
 - Obligatoires : `SuperiorSkyblock2`, `Vault`
-- Optionnelles : `PlaceholderAPI`
+- Optionnelles : `PlaceholderAPI`, `ViaVersion`
 
 ## Commandes
 
@@ -50,7 +64,20 @@ Fichiers par défaut repris du serveur (secrets remplacés par `CHANGE_ME`). Cli
 <pre>
 plugins/SHSSBWarpsGUI/
 └── <a href="src/main/resources/config.yml">config.yml</a>
+    ├── messages, manage-warp-messages, main-gui, player-warps-gui, manage-warp-gui, featured-warps…   (inchangés)
+    └── <a href="src/main/resources/config.yml#L338">dialogues</a>
+        ├── <a href="src/main/resources/config.yml#L339">actif</a>                 dialogues activés (false : chat comme avant)
+        ├── <a href="src/main/resources/config.yml#L342">min-protocol</a>          version de protocole minimale (771 = 1.21.6)
+        ├── <a href="src/main/resources/config.yml#L344">expiration</a>            validité d'une fenêtre, en secondes
+        ├── <a href="src/main/resources/config.yml#L345">boutons</a>               textes Valider / Annuler
+        ├── <a href="src/main/resources/config.yml#L348">renommer</a>              fenêtre du nom (titre, corps, champ, longueur-max)
+        ├── <a href="src/main/resources/config.yml#L356">description</a>           fenêtre de la description (champ multiligne, hauteur, pre-remplir)
+        ├── <a href="src/main/resources/config.yml#L369">suppression</a>           confirmation de suppression
+        ├── <a href="src/main/resources/config.yml#L377">erreurs</a>               erreurs affichées en rouge dans la fenêtre
+        └── <a href="src/main/resources/config.yml#L382">messages</a>              fenêtre expirée, erreur inattendue
 </pre>
+
+La section `dialogues` est complète dans le jar : un `config.yml` déjà présent sur le serveur qui ne la contient pas utilise les valeurs par défaut.
 
 ## Compilation
 
