@@ -77,7 +77,7 @@ plugins/SHSSBWarpsGUI/
         └── <a href="src/main/resources/config.yml#L382">messages</a>              fenêtre expirée, erreur inattendue
 </pre>
 
-La section `dialogues` est complète dans le jar : un `config.yml` déjà présent sur le serveur qui ne la contient pas utilise les valeurs par défaut.
+La section `dialogues` est complète dans le jar. Le plugin ne réécrit jamais le `config.yml` du serveur : toute clé absente du fichier (la section entière ou une seule ligne) est lue dans le `config.yml` embarqué dans le jar, sans rien y copier, et les fenêtres gardent donc leurs textes (titre, boutons, champ, erreurs). Pour personnaliser un texte ou un réglage, ajoutez la clé (ou toute la section) dans le `config.yml` du serveur : elle l'emporte sur celle du jar.
 
 ## Compilation
 

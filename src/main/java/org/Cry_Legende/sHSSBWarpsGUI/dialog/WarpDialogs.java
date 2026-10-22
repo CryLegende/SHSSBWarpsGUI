@@ -51,8 +51,12 @@ public final class WarpDialogs {
 
     // ------------------------------------------------------------------ textes
 
+    /**
+     * Texte de la section dialogues. Aucune valeur par défaut explicite ici : une clé absente du config.yml du serveur
+     * retombe sur celle du config.yml embarqué dans le jar (les défauts que Bukkit attache à getConfig()).
+     */
     private String text(String path, String... replacements) {
-        return replace(plugin.getConfig().getString("dialogues." + path, ""), replacements);
+        return replace(engine.configText(path), replacements);
     }
 
     private List<String> lines(String path, String... replacements) {

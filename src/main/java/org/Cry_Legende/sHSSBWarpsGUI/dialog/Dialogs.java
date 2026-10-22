@@ -154,6 +154,15 @@ final class Dialogs implements Listener {
         return true;
     }
 
+    /**
+     * Texte de la section dialogues, sans valeur par défaut explicite : une clé absente du config.yml du serveur retombe
+     * sur celle du config.yml embarqué dans le jar (les défauts que Bukkit attache à getConfig()).
+     */
+    String configText(String path) {
+        String value = plugin.getConfig().getString("dialogues." + path);
+        return value == null ? "" : value;
+    }
+
     private long expirationNanos() {
         return Math.max(10L, plugin.getConfig().getLong("dialogues.expiration", 600L)) * 1_000_000_000L;
     }
@@ -298,7 +307,7 @@ final class Dialogs implements Listener {
         }
         Taken taken = take(player.getUniqueId(), parts[0], parts[1], System.nanoTime());
         if (taken.outcome() == Outcome.EXPIRED) {
-            player.sendMessage(LEGACY.deserialize(plugin.getConfig().getString("dialogues.messages.expire", "")));
+            player.sendMessage(LEGACY.deserialize(configText("messages.expire")));
             return;
         }
         if (taken.outcome() != Outcome.OK) {
@@ -310,7 +319,7 @@ final class Dialogs implements Listener {
             taken.pending().reaction().accept(player, confirmed, confirmed ? (text == null ? "" : text) : null);
         } catch (RuntimeException e) {
             plugin.getLogger().log(Level.WARNING, "Dialogue « " + parts[0] + " » de " + player.getName() + " : " + e, e);
-            player.sendMessage(LEGACY.deserialize(plugin.getConfig().getString("dialogues.messages.erreur", "")));
+            player.sendMessage(LEGACY.deserialize(configText("messages.erreur")));
         }
     }
 }
