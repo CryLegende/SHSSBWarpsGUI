@@ -45,7 +45,9 @@ public class GuiListener implements Listener {
      */
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof BaseGUI || event.getInventory().getHolder() instanceof ConfirmationGUICallbackHolder) {
+        // getHolder(false) : pas d'instantané du bloc pour les coffres, cet événement passe pour tous les inventaires du serveur
+        InventoryHolder holder = event.getInventory().getHolder(false);
+        if (holder instanceof BaseGUI || holder instanceof ConfirmationGUICallbackHolder) {
             event.setCancelled(true);
         }
     }
@@ -57,7 +59,8 @@ public class GuiListener implements Listener {
 
         // Vérification de sécurité : Est-ce que l'inventaire ouvert (Top) est un de nos menus ?
         Inventory topInventory = event.getView().getTopInventory();
-        InventoryHolder topHolder = topInventory.getHolder();
+        // getHolder(false) : pas d'instantané du bloc pour les coffres, cet événement passe pour tous les clics du serveur
+        InventoryHolder topHolder = topInventory.getHolder(false);
         boolean isOurGui = topHolder instanceof BaseGUI || topHolder instanceof ConfirmationGUICallbackHolder;
 
         if (isOurGui) {
@@ -77,7 +80,7 @@ public class GuiListener implements Listener {
 
         // --- Logique du clic dans le menu ---
 
-        InventoryHolder holder = clickedInventory.getHolder();
+        InventoryHolder holder = topHolder; // clickedInventory == topInventory à ce stade
         ItemStack clickedItem = event.getCurrentItem();
 
         if (clickedItem == null || clickedItem.getType() == Material.AIR) return;

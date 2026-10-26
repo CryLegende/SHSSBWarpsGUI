@@ -204,7 +204,7 @@ public class MainWarpsGUI extends BaseGUI {
             if (inventory != null && inventory.getHolder() == this) {
                 for (int slot = 0; slot < inventory.getSize(); slot++) {
                     ItemStack itemInSlot = inventory.getItem(slot);
-                    if (itemInSlot != null &&
+                    if (itemInSlot != null && itemInSlot.getType() == Material.PLAYER_HEAD &&
                         Objects.equals(getItemPersistentData(itemInSlot, TARGET_PLAYER_UUID_KEY), owner.getUniqueId().toString()) &&
                         Objects.equals(getItemPersistentData(itemInSlot, ITEM_ACTION_KEY), getItemPersistentData(itemToTexture, ITEM_ACTION_KEY))) {
                         inventory.setItem(slot, finalDisplayItem);

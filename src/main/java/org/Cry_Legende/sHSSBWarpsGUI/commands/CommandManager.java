@@ -19,12 +19,16 @@ public class CommandManager implements Listener {
         this.islandCommand = new IslandCommand(plugin);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        if (event.isCancelled()) return;
+        // Sortie rapide : cet événement passe pour chaque commande de chaque joueur
+        String message = event.getMessage();
+        if (!message.regionMatches(true, 1, "is ", 0, 3) && !message.regionMatches(true, 1, "island ", 0, 7)) {
+            return;
+        }
 
         Player player = event.getPlayer();
-        String command = event.getMessage().substring(1);
+        String command = message.substring(1);
         String[] parts = command.split(" ");
         String label = parts[0].toLowerCase();
 

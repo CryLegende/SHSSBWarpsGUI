@@ -235,6 +235,9 @@ public class IslandCommand {
 
     public void openMainGui(Player player) {
         plugin.getWarpManager().getAllWarpsSorted().thenAcceptAsync(allWarps -> {
+            if (!player.isOnline()) {
+                return; // parti pendant le chargement de la liste
+            }
             if (allWarps.isEmpty()) {
                 ChatUtils.sendMessage(player, "&cAucun warp n'est disponible pour le moment.");
                 return;
@@ -272,7 +275,19 @@ public class IslandCommand {
             });
 
             new MainWarpsGUI(plugin, player, allWarps).open();
-        }, runnable -> Bukkit.getScheduler().runTask(plugin, runnable));
+        }, runnable -> {
+            if (Bukkit.isPrimaryThread()) {
+                runnable.run();
+            } else if (plugin.isEnabled()) {
+                Bukkit.getScheduler().runTask(plugin, runnable);
+            }
+        }).exceptionally(error -> {
+            plugin.getLogger().log(java.util.logging.Level.WARNING, "Impossible de construire la liste des warps pour " + player.getName(), error);
+            if (plugin.isEnabled()) {
+                Bukkit.getScheduler().runTask(plugin, () -> ChatUtils.sendMessage(player, plugin.getConfigManager().msgGenericError));
+            }
+            return null;
+        });
     }
 
     private void openPlayerWarpsGui(Player viewer, OfflinePlayer warpOwner, BaseGUI previousGui) {

@@ -27,7 +27,7 @@ public class FavoritesManager {
                 file.getParentFile().mkdirs();
                 file.createNewFile();
             } catch (IOException e) {
-                e.printStackTrace();
+                plugin.getLogger().severe("Impossible de créer favorites.yml: " + e.getMessage());
             }
         }
         config = YamlConfiguration.loadConfiguration(file);
@@ -56,7 +56,7 @@ public class FavoritesManager {
         try {
             config.save(file);
         } catch (IOException e) {
-            e.printStackTrace();
+            plugin.getLogger().severe("Impossible de sauvegarder favorites.yml: " + e.getMessage());
         }
     }
 
@@ -81,7 +81,7 @@ public class FavoritesManager {
 
     public boolean canAddFavorite(UUID viewer) {
         int max = plugin.getConfig().getInt("favorites.max-count", 5);
-        return favoritesCache.computeIfAbsent(viewer, k -> new ArrayList<>()).size() < max;
+        return favoritesCache.getOrDefault(viewer, List.of()).size() < max;
     }
 
     public List<UUID> getFavorites(UUID viewer) {

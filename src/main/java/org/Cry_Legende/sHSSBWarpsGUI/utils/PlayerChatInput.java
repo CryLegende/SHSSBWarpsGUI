@@ -19,14 +19,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerChatInput implements Listener {
 
-    private static final Map<UUID, PendingWarpActionInfo> pendingActions = new HashMap<>();
+    // Lu depuis le thread du chat (asynchrone) et modifié sur le thread principal
+    private static final Map<UUID, PendingWarpActionInfo> pendingActions = new ConcurrentHashMap<>();
     private final SHSSBWarpsGUI plugin;
 
     public enum InputType {
@@ -80,9 +81,9 @@ public class PlayerChatInput implements Listener {
         Player player = event.getPlayer();
         UUID playerId = player.getUniqueId();
 
-        if (pendingActions.containsKey(playerId)) {
+        PendingWarpActionInfo actionInfo = pendingActions.get(playerId);
+        if (actionInfo != null) {
             event.setCancelled(true);
-            PendingWarpActionInfo actionInfo = pendingActions.get(playerId);
             String input = event.getMessage();
 
             Bukkit.getScheduler().runTask(plugin, () -> {

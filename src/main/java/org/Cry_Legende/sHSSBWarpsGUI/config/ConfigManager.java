@@ -1,6 +1,8 @@
 package org.Cry_Legende.sHSSBWarpsGUI.config;
 
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -360,15 +363,33 @@ public class ConfigManager {
 
     private SoundConfig loadSoundConfig(ConfigurationSection section, SoundConfig defaultConfig) {
         if (section == null) return defaultConfig;
-        try {
-            String soundName = section.getString("sound", defaultConfig != null ? defaultConfig.sound.name() : "UI_BUTTON_CLICK").toUpperCase();
-            Sound sound = Sound.valueOf(soundName);
-            float volume = (float) section.getDouble("volume", defaultConfig != null ? defaultConfig.volume : 1.0);
-            float pitch = (float) section.getDouble("pitch", defaultConfig != null ? defaultConfig.pitch : 1.0);
-            return new SoundConfig(sound, volume, pitch);
-        } catch (IllegalArgumentException e) {
-            plugin.getLogger().warning("Son invalide dans la config: '" + section.getString("sound") + "' (section: " + section.getCurrentPath() + ").");
+        String raw = section.getString("sound");
+        Sound sound = raw == null
+            ? (defaultConfig != null ? defaultConfig.sound : Sound.UI_BUTTON_CLICK)
+            : sound(raw);
+        if (sound == null) {
+            plugin.getLogger().warning("Son invalide dans la config: '" + raw + "' (section: " + section.getCurrentPath() + ").");
             return defaultConfig != null ? defaultConfig : new SoundConfig(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+        }
+        float volume = (float) section.getDouble("volume", defaultConfig != null ? defaultConfig.volume : 1.0);
+        float pitch = (float) section.getDouble("pitch", defaultConfig != null ? defaultConfig.pitch : 1.0);
+        return new SoundConfig(sound, volume, pitch);
+    }
+
+    /**
+     * Son lu en config : ancien nom (ENTITY_PLAYER_LEVELUP) ou clé (minecraft:entity.player.levelup).
+     */
+    private static Sound sound(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String s = raw.trim();
+        if (s.indexOf(':') >= 0 || s.indexOf('.') >= 0) {
+            NamespacedKey key = NamespacedKey.fromString(s.toLowerCase(Locale.ROOT));
+            return key == null ? null : Registry.SOUND_EVENT.get(key);
+        }
+        try {
+            return (Sound) Sound.class.getField(s.toUpperCase(Locale.ROOT)).get(null);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            return null;
         }
     }
 

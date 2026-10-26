@@ -148,6 +148,12 @@ public class ManageWarpGUI extends BaseGUI {
             return;
         }
 
+        // Le menu a pu rester ouvert pendant que le warp disparaissait ou que les droits du joueur changeaient
+        if (WarpRules.resolveForEdit(plugin, player, this.warpToManage) == null) {
+            player.closeInventory();
+            return;
+        }
+
         ConfigManager cfgMgr = plugin.getConfigManager();
         String messageToSend;
 
@@ -171,6 +177,11 @@ public class ManageWarpGUI extends BaseGUI {
                 }
                 break;
             case "EDIT_WARP_LOCATION":
+                // Comme /is setwarp : l'emplacement doit rester dans l'île, sinon un warp public mènerait n'importe où
+                if (!island.isInsideRange(player.getLocation())) {
+                    ChatUtils.sendMessage(player, "&cVous devez vous trouver sur l'île du warp pour déplacer son emplacement.");
+                    break;
+                }
                 this.warpToManage.setLocation(player.getLocation());
                 // SuperiorSkyblockAPI.getSuperiorSkyblock().getGrid().saveIsland(this.island); // Si SSB2 ne sauvegarde pas automatiquement
                 messageToSend = cfgMgr.msgWarpLocSet.replace("%warp_name%", warpNameFromPDC);

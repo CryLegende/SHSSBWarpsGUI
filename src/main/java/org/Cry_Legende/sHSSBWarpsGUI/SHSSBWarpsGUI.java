@@ -79,7 +79,7 @@ public class SHSSBWarpsGUI extends JavaPlugin {
     public void onDisable() {
         // Sauvegarde des données et arrêt des tâches
         if (textureService != null) {
-            textureService.saveCaches();
+            textureService.shutdown();
         }
         if (featuredWarpsManager != null) {
             featuredWarpsManager.saveFeaturedWarps();

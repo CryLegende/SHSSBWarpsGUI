@@ -13,19 +13,20 @@ import org.bukkit.scheduler.BukkitTask; // Ajout de l'import BukkitTask
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class FeaturedWarpsManager {
     private final SHSSBWarpsGUI plugin;
     private final File featuredWarpsFile;
     private FileConfiguration featuredWarpsConfig;
-    private final Set<FeaturedWarpEntry> featuredWarps = new HashSet<>();
+    private final Set<FeaturedWarpEntry> featuredWarps = ConcurrentHashMap.newKeySet();
     private BukkitTask expiryCheckTask; // Utiliser BukkitTask pour pouvoir l'annuler
 
     public static class FeaturedWarpEntry {
         public final UUID ownerUUID;
         public final String warpName;
-        public long expiryTimestamp;
+        public volatile long expiryTimestamp;
 
         public FeaturedWarpEntry(UUID ownerUUID, String warpName, long expiryTimestamp) {
             this.ownerUUID = ownerUUID;
@@ -57,10 +58,13 @@ public class FeaturedWarpsManager {
         }
 
         public static FeaturedWarpEntry fromSaveString(String s) {
-            String[] parts = s.split(":", 3);
-            if (parts.length == 3) {
+            // uuid:nom:expiration — le nom d'un warp peut lui-même contenir des « : », l'expiration est après le dernier
+            int firstColon = s.indexOf(':');
+            int lastColon = s.lastIndexOf(':');
+            if (firstColon > 0 && lastColon > firstColon) {
                 try {
-                    return new FeaturedWarpEntry(UUID.fromString(parts[0]), parts[1], Long.parseLong(parts[2]));
+                    return new FeaturedWarpEntry(UUID.fromString(s.substring(0, firstColon)),
+                        s.substring(firstColon + 1, lastColon), Long.parseLong(s.substring(lastColon + 1)));
                 } catch (IllegalArgumentException e) {
                     SHSSBWarpsGUI.getInstance().getLogger().warning("Erreur de format pour l'entrée de warp mis en avant: " + s + " - " + e.getMessage());
                 }
@@ -168,7 +172,8 @@ public class FeaturedWarpsManager {
         if (expiryCheckTask != null && !expiryCheckTask.isCancelled()) {
             expiryCheckTask.cancel();
         }
-        expiryCheckTask = new ExpiryCheckTask().runTaskTimerAsynchronously(plugin, 20L * 60, 20L * 60); // Toutes les minutes
+        // Sur le thread principal : la tâche prévient le propriétaire (API Bukkit, PlaceholderAPI) et ne parcourt qu'une petite liste
+        expiryCheckTask = new ExpiryCheckTask().runTaskTimer(plugin, 20L * 60, 20L * 60); // Toutes les minutes
         plugin.getLogger().info("Tâche de vérification d'expiration des warps mis en avant démarrée.");
     }
 
