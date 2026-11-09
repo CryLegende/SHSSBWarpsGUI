@@ -8,6 +8,7 @@ import org.Cry_Legende.sHSSBWarpsGUI.config.SoundConfig;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.WarpManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ItemStackBuilder;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -20,6 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +72,7 @@ public abstract class BaseGUI implements InventoryHolder {
         Map<String, String> titlePlaceholders = new HashMap<>();
         if (this instanceof PlayerSpecificWarpsGUI && ((PlayerSpecificWarpsGUI) this).getWarpOwnerOffline() != null) {
             OfflinePlayer warpOwner = ((PlayerSpecificWarpsGUI) this).getWarpOwnerOffline();
-            titlePlaceholders.put("%target_player_name%", warpOwner.getName() != null ? warpOwner.getName() : "Inconnu");
+            titlePlaceholders.put("%target_player_name%", PlayerNames.of(warpOwner, "Inconnu"));
         }
         String title = parsePlaceholders(guiConfig.title, viewer, titlePlaceholders);
         inventory = Bukkit.createInventory(this, guiConfig.size, ChatUtils.color(title));
@@ -131,7 +133,7 @@ public abstract class BaseGUI implements InventoryHolder {
                     continue;
                 }
                 plugin.getLogger().fine("[BaseGUI Debug] FillDynamicItems - GUI: " + guiConfig.title +
-                    " | Context: " + (placeholderContext != null ? placeholderContext.getName() : "null") +
+                    " | Context: " + (placeholderContext != null ? PlayerNames.of(placeholderContext) : "null") +
                     " | Template Material: " + baseItemCfg.materialString +
                     " | Action: " + baseItemCfg.action + " | Featured: " + isFeatured);
 
@@ -168,7 +170,7 @@ public abstract class BaseGUI implements InventoryHolder {
 
     protected ItemStack buildItemFromConfig(ItemConfig itemCfg, OfflinePlayer placeholderContext, Map<String, String> additionalPlaceholders) {
         if (itemCfg == null) {
-            plugin.getLogger().warning("buildItemFromConfig a reçu ItemConfig null. Context: " + (placeholderContext != null ? placeholderContext.getName() : "null"));
+            plugin.getLogger().warning("buildItemFromConfig a reçu ItemConfig null. Context: " + (placeholderContext != null ? PlayerNames.of(placeholderContext) : "null"));
             return new ItemStack(Material.BARRIER);
         }
         if ("AIR".equalsIgnoreCase(itemCfg.materialString)) {
@@ -233,26 +235,35 @@ public abstract class BaseGUI implements InventoryHolder {
         return null;
     }
 
-    // --- DÉBUT DE LA CORRECTION ---
+    /**
+     * PlaceholderAPI sur le modèle, puis les placeholders du menu (%player_name%, %warp_name%...).
+     * Les placeholders du menu sont masqués pendant le passage de PlaceholderAPI : sinon PAPI résout lui-même
+     * %player_name% d'un joueur hors ligne en relisant son fichier playerdata, et une valeur saisie par un joueur
+     * (nom ou description de warp) ne passe jamais par PAPI. Sans autre placeholder, PAPI n'est pas appelé.
+     */
     protected String parsePlaceholders(String text, OfflinePlayer p, Map<String, String> customPlaceholders) {
         if (text == null) return "";
 
-        // NOUVELLE LOGIQUE :
-        // 1. Appliquer PlaceholderAPI en premier sur le texte brut.
-        String result = plugin.getPapiHook() != null ? plugin.getPapiHook().setPlaceholders(p, text) : text;
-
-        // 2. Appliquer ensuite les placeholders personnalisés (comme %target_player_name%) sur le résultat.
+        List<Map.Entry<String, String>> present = new ArrayList<>();
+        String result = text;
         if (customPlaceholders != null) {
             for (Map.Entry<String, String> entry : customPlaceholders.entrySet()) {
-                if (entry.getKey() != null && entry.getValue() != null) {
-                    result = result.replace(entry.getKey(), entry.getValue());
+                if (entry.getKey() != null && entry.getValue() != null && result.contains(entry.getKey())) {
+                    result = result.replace(entry.getKey(), "\u0000" + present.size() + "\u0000");
+                    present.add(entry);
                 }
             }
         }
 
-        return result; // Retourner le résultat final, entièrement parsé.
+        if (plugin.getPapiHook() != null && result.indexOf('%') >= 0) {
+            result = plugin.getPapiHook().setPlaceholders(p, result);
+        }
+
+        for (int i = 0; i < present.size(); i++) {
+            result = result.replace("\u0000" + i + "\u0000", present.get(i).getValue());
+        }
+        return result;
     }
-    // --- FIN DE LA CORRECTION ---
 
     protected List<String> parseLorePlaceholders(List<String> lore, OfflinePlayer p, Map<String, String> customPlaceholders) {
         if (lore == null) return Collections.emptyList();

@@ -11,6 +11,7 @@ import org.Cry_Legende.sHSSBWarpsGUI.managers.FeaturedWarpsManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ItemStackBuilder;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerChatInput;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -484,7 +485,7 @@ public class GuiListener implements Listener {
 
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("%warp_name%", warpName);
-        placeholders.put("%owner_name%", warpOwner.getName() != null ? warpOwner.getName() : "Inconnu");
+        placeholders.put("%owner_name%", PlayerNames.of(warpOwner, "Inconnu"));
         placeholders.put("%cost%", String.format("%,.2f", cfgMgr.featuredCost));
         placeholders.put("%feature_duration_formatted%", ConfigManager.formatDuration(cfgMgr.featuredDurationMillis, cfgMgr.featuredDurationFormat));
         String currency = plugin.getVaultHook().getEconomy() != null ? plugin.getVaultHook().getEconomy().currencyNamePlural() : "";
@@ -568,7 +569,7 @@ public class GuiListener implements Listener {
 
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("%warp_name%", warpName);
-        placeholders.put("%owner_name%", warpOwner.getName() != null ? warpOwner.getName() : "Inconnu");
+        placeholders.put("%owner_name%", PlayerNames.of(warpOwner, "Inconnu"));
         placeholders.put("%cost%", String.format("%,.2f", cfgMgr.featuredCost));
         placeholders.put("%duration%", ConfigManager.formatDuration(cfgMgr.featuredDurationMillis, cfgMgr.featuredDurationFormat));
         String currency = plugin.getVaultHook().getEconomy() != null ? plugin.getVaultHook().getEconomy().currencyNamePlural() : "";

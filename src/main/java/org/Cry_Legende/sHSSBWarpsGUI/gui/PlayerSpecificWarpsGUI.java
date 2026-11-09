@@ -10,6 +10,7 @@ import org.Cry_Legende.sHSSBWarpsGUI.config.ConfiguredItem;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ItemConfig;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.FeaturedWarpsManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -49,7 +50,7 @@ public class PlayerSpecificWarpsGUI extends BaseGUI {
         Island island = (ssbOwner != null) ? ssbOwner.getIsland() : null;
 
         Map<String, String> customPlaceholders = new HashMap<>();
-        customPlaceholders.put("%target_player_name%", warpOwnerOffline.getName() != null ? warpOwnerOffline.getName() : "Inconnu");
+        customPlaceholders.put("%target_player_name%", PlayerNames.of(warpOwnerOffline, "Inconnu"));
 
         if (island != null) {
             customPlaceholders.put("%island_rating_formatted%", String.format("%.1f ★", island.getTotalRating()));
@@ -123,7 +124,7 @@ public class PlayerSpecificWarpsGUI extends BaseGUI {
 
         Map<String, String> customPlaceholders = new HashMap<>();
         customPlaceholders.put("%warp_name%", warp.getName());
-        customPlaceholders.put("%owner_name%", warpOwnerOffline.getName() != null ? warpOwnerOffline.getName() : "Inconnu");
+        customPlaceholders.put("%owner_name%", PlayerNames.of(warpOwnerOffline, "Inconnu"));
         Location loc = warp.getLocation();
         customPlaceholders.put("%warp_x%", String.valueOf(loc.getBlockX()));
         customPlaceholders.put("%warp_y%", String.valueOf(loc.getBlockY()));

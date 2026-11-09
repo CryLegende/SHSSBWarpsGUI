@@ -3,6 +3,7 @@ package org.Cry_Legende.sHSSBWarpsGUI.managers;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -197,7 +198,7 @@ public class FeaturedWarpsManager {
                     toRemove.add(entry);
                     changed = true;
                     OfflinePlayer owner = Bukkit.getOfflinePlayer(entry.ownerUUID);
-                    String ownerName = owner.getName() != null ? owner.getName() : entry.ownerUUID.toString().substring(0, 6);
+                    String ownerName = PlayerNames.of(owner, entry.ownerUUID.toString().substring(0, 6));
 
                     // Préparer les placeholders pour le message
                     Map<String, String> placeholders = new HashMap<>();

@@ -3,6 +3,7 @@ package org.Cry_Legende.sHSSBWarpsGUI.services;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -250,7 +251,7 @@ public class TextureService {
         }
 
         UUID primaryUUID = targetPlayer.getUniqueId(); // UUID que le serveur connaît (offline si en offline mode)
-        String playerName = targetPlayer.getName();
+        String playerName = PlayerNames.of(targetPlayer);
 
         if (!serverOfflineMode) {
             // ONLINE MODE: primaryUUID est l'UUID premium.
@@ -307,15 +308,15 @@ public class TextureService {
     }
 
     private void processTextureFetch(UUID premiumUUIDToFetch, SkullMeta meta, ItemStack head, OfflinePlayer originalTargetPlayer, Consumer<ItemStack> callback) {
-        plugin.getLogger().fine("[TextureService] processTextureFetch: Attempting to use/fetch texture for Premium UUID: " + premiumUUIDToFetch + " (for player " + originalTargetPlayer.getName() + ")");
+        plugin.getLogger().fine("[TextureService] processTextureFetch: Attempting to use/fetch texture for Premium UUID: " + premiumUUIDToFetch + " (for player " + PlayerNames.of(originalTargetPlayer) + ")");
         String cachedTexture = premiumTextureCache.get(premiumUUIDToFetch);
 
         if (cachedTexture != null) {
             if (NO_SKIN_MARKER.equals(cachedTexture)) {
-                plugin.getLogger().fine("[TextureService] processTextureFetch: Premium UUID " + premiumUUIDToFetch + " marked as NO_SKIN. Applying fallback for " + originalTargetPlayer.getName());
+                plugin.getLogger().fine("[TextureService] processTextureFetch: Premium UUID " + premiumUUIDToFetch + " marked as NO_SKIN. Applying fallback for " + PlayerNames.of(originalTargetPlayer));
                 applyFallbackSkin(meta, originalTargetPlayer);
             } else {
-                plugin.getLogger().fine("[TextureService] processTextureFetch: Found cached texture for Premium UUID " + premiumUUIDToFetch + ". Applying for " + originalTargetPlayer.getName());
+                plugin.getLogger().fine("[TextureService] processTextureFetch: Found cached texture for Premium UUID " + premiumUUIDToFetch + ". Applying for " + PlayerNames.of(originalTargetPlayer));
                 applyTextureToMeta(meta, premiumUUIDToFetch, cachedTexture);
             }
             head.setItemMeta(meta);
@@ -324,23 +325,23 @@ public class TextureService {
         }
 
         // Texture non trouvée dans premiumTextureCache, il faut la récupérer de Mojang
-        plugin.getLogger().fine("[TextureService] processTextureFetch: No cached texture for Premium UUID " + premiumUUIDToFetch + ". Fetching from Mojang for " + originalTargetPlayer.getName() + "...");
+        plugin.getLogger().fine("[TextureService] processTextureFetch: No cached texture for Premium UUID " + premiumUUIDToFetch + ". Fetching from Mojang for " + PlayerNames.of(originalTargetPlayer) + "...");
         fetchTextureFromMojang(premiumUUIDToFetch).thenAcceptAsync(fetchResult -> {
             if (fetchResult.isSuccess() && fetchResult.getTexture() != null && !fetchResult.getTexture().isEmpty()) {
                 String texture = fetchResult.getTexture();
-                plugin.getLogger().info("[TextureService] processTextureFetch: Successfully fetched texture for Premium UUID " + premiumUUIDToFetch + ". Caching and applying for " + originalTargetPlayer.getName());
+                plugin.getLogger().info("[TextureService] processTextureFetch: Successfully fetched texture for Premium UUID " + premiumUUIDToFetch + ". Caching and applying for " + PlayerNames.of(originalTargetPlayer));
                 premiumTextureCache.put(premiumUUIDToFetch, texture);
                 applyTextureToMeta(meta, premiumUUIDToFetch, texture);
                 markDirty();
             } else if (fetchResult.isTemporary()) {
                 // Limite de débit, erreur réseau ou HTTP : skin par défaut cette fois, sans le mémoriser comme « pas de skin »
                 plugin.getLogger().warning("[TextureService] processTextureFetch: Temporary failure fetching texture for Premium UUID " + premiumUUIDToFetch +
-                    " (" + fetchResult.getErrorMessage() + "). Applying fallback for " + originalTargetPlayer.getName() + " without caching.");
+                    " (" + fetchResult.getErrorMessage() + "). Applying fallback for " + PlayerNames.of(originalTargetPlayer) + " without caching.");
                 applyFallbackSkin(meta, originalTargetPlayer);
             } else {
                 plugin.getLogger().warning("[TextureService] processTextureFetch: Failed to fetch texture for Premium UUID " + premiumUUIDToFetch +
                     (fetchResult.isNoContent() ? " (No skin data 204)" : " (Error: " + fetchResult.getErrorMessage() + ")") +
-                    ". Applying fallback for " + originalTargetPlayer.getName() + " and caching NO_SKIN_MARKER.");
+                    ". Applying fallback for " + PlayerNames.of(originalTargetPlayer) + " and caching NO_SKIN_MARKER.");
                 applyFallbackSkin(meta, originalTargetPlayer);
                 premiumTextureCache.put(premiumUUIDToFetch, NO_SKIN_MARKER);
                 markDirty();
@@ -351,7 +352,7 @@ public class TextureService {
     }
 
     private void applyFallbackSkin(SkullMeta meta, OfflinePlayer target) {
-        plugin.getLogger().fine("[TextureService] Applying fallback skin (setOwningPlayer) for " + target.getName());
+        plugin.getLogger().fine("[TextureService] Applying fallback skin (setOwningPlayer) for " + PlayerNames.of(target));
         meta.setOwningPlayer(target);
     }
 

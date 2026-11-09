@@ -14,6 +14,7 @@ import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ItemStackBuilder;
 import org.Cry_Legende.sHSSBWarpsGUI.dialog.WarpDialogs;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerChatInput;
+import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.WarpRules;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -56,7 +57,7 @@ public class ManageWarpGUI extends BaseGUI {
         }
         Map<String, String> titlePlaceholders = new HashMap<>();
         titlePlaceholders.put("%warp_name%", warpToManage.getName());
-        titlePlaceholders.put("%owner_name%", warpOwner.getName() != null ? warpOwner.getName() : "Inconnu");
+        titlePlaceholders.put("%owner_name%", PlayerNames.of(warpOwner, "Inconnu"));
 
         String title = parsePlaceholders(guiConfig.title, warpOwner, titlePlaceholders);
         inventory = Bukkit.createInventory(this, guiConfig.size, ChatUtils.color(title));
