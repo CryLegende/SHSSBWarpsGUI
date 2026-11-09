@@ -25,12 +25,14 @@ public class WarpManager {
 
     public static class PlayerWarpData {
         private final OfflinePlayer owner;
+        private final String ownerName;
         private final List<IslandWarp> warps;
         private final boolean isOnline;
         private final boolean hasFeaturedWarp;
 
-        public PlayerWarpData(OfflinePlayer owner, List<IslandWarp> warps, boolean isOnline, boolean hasFeaturedWarp) {
+        public PlayerWarpData(OfflinePlayer owner, String ownerName, List<IslandWarp> warps, boolean isOnline, boolean hasFeaturedWarp) {
             this.owner = owner;
+            this.ownerName = ownerName;
             this.warps = warps;
             this.isOnline = isOnline;
             this.hasFeaturedWarp = hasFeaturedWarp;
@@ -38,6 +40,14 @@ public class WarpManager {
 
         public OfflinePlayer getOwner() {
             return owner;
+        }
+
+        /**
+         * Nom du propriétaire lu dans SuperiorSkyblock2 (en mémoire). OfflinePlayer#getName relit le fichier du
+         * joueur sur le disque pour un joueur hors ligne : à ne jamais appeler dans un tri.
+         */
+        public String getOwnerName() {
+            return ownerName;
         }
 
         public List<IslandWarp> getWarps() {
@@ -59,7 +69,7 @@ public class WarpManager {
      * thread principal : le futur retourné se termine donc sur le thread principal.
      */
     public CompletableFuture<List<PlayerWarpData>> getAllWarpsSorted() {
-        CompletableFuture<List<Map.Entry<UUID, List<IslandWarp>>>> collected = new CompletableFuture<>();
+        CompletableFuture<List<OwnerWarps>> collected = new CompletableFuture<>();
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 collected.complete(collectPublicWarps());
@@ -76,9 +86,13 @@ public class WarpManager {
         });
     }
 
-    private List<Map.Entry<UUID, List<IslandWarp>>> collectPublicWarps() {
+    // Propriétaire d'île et ses warps publics, nom compris : le nom vient de SuperiorSkyblock2, sans accès disque
+    private record OwnerWarps(UUID ownerId, String ownerName, List<IslandWarp> warps) {
+    }
+
+    private List<OwnerWarps> collectPublicWarps() {
         List<Island> islands = SuperiorSkyblockAPI.getGrid().getIslands();
-        List<Map.Entry<UUID, List<IslandWarp>>> result = new ArrayList<>();
+        List<OwnerWarps> result = new ArrayList<>();
 
         for (Island island : islands) {
             if (island.getOwner() == null || island.getOwner().getUniqueId() == null) {
@@ -96,47 +110,29 @@ public class WarpManager {
                 .collect(Collectors.toList());
 
             if (!accessibleWarps.isEmpty()) {
-                result.add(Map.entry(island.getOwner().getUniqueId(), accessibleWarps));
+                result.add(new OwnerWarps(island.getOwner().getUniqueId(), island.getOwner().getName(), accessibleWarps));
             }
         }
         return result;
     }
 
-    private List<PlayerWarpData> buildSortedData(List<Map.Entry<UUID, List<IslandWarp>>> collected) {
+    private List<PlayerWarpData> buildSortedData(List<OwnerWarps> collected) {
         List<PlayerWarpData> playerDataList = new ArrayList<>();
         FeaturedWarpsManager fwm = plugin.getFeaturedWarpsManager();
 
-        for (Map.Entry<UUID, List<IslandWarp>> entry : collected) {
-            OfflinePlayer owner = Bukkit.getOfflinePlayer(entry.getKey());
-            if (owner == null) {
-                plugin.getLogger().warning("getAllWarpsSorted: Impossible d'obtenir OfflinePlayer pour UUID " + entry.getKey() + ", île ignorée.");
-                continue;
-            }
-            List<IslandWarp> accessibleWarps = entry.getValue();
+        for (OwnerWarps entry : collected) {
+            OfflinePlayer owner = Bukkit.getOfflinePlayer(entry.ownerId());
+            List<IslandWarp> accessibleWarps = entry.warps();
             boolean isAnyWarpFeatured = accessibleWarps.stream()
-                .anyMatch(w -> fwm.isFeatured(owner.getUniqueId(), w.getName()));
-            playerDataList.add(new PlayerWarpData(owner, accessibleWarps, owner.isOnline(), isAnyWarpFeatured));
+                .anyMatch(w -> fwm.isFeatured(entry.ownerId(), w.getName()));
+            playerDataList.add(new PlayerWarpData(owner, entry.ownerName(), accessibleWarps, owner.isOnline(), isAnyWarpFeatured));
         }
 
-        playerDataList.sort(new Comparator<PlayerWarpData>() {
-            @Override
-            public int compare(PlayerWarpData o1, PlayerWarpData o2) {
-                if (o1.hasFeaturedWarp() && !o2.hasFeaturedWarp()) return -1;
-                if (!o1.hasFeaturedWarp() && o2.hasFeaturedWarp()) return 1;
-
-                if (o1.isOnline() && !o2.isOnline()) return -1;
-                if (!o1.isOnline() && o2.isOnline()) return 1;
-
-                String name1 = o1.getOwner().getName();
-                String name2 = o2.getOwner().getName();
-
-                if (name1 == null && name2 == null) return 0;
-                if (name1 == null) return 1;
-                if (name2 == null) return -1;
-
-                return name1.compareToIgnoreCase(name2);
-            }
-        });
+        // Mis en avant d'abord, puis en ligne, puis par nom ; les noms inconnus en dernier
+        playerDataList.sort(Comparator
+            .comparing((PlayerWarpData d) -> !d.hasFeaturedWarp())
+            .thenComparing(d -> !d.isOnline())
+            .thenComparing(PlayerWarpData::getOwnerName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
         return playerDataList;
     }
 }

@@ -54,7 +54,7 @@ public class MainWarpsGUI extends BaseGUI {
         } else {
             WarpManager.PlayerWarpData old = data.get(index);
             boolean featured = publicWarps.stream().anyMatch(warp -> plugin.getFeaturedWarpsManager().isFeatured(ownerId, warp.getName()));
-            data.set(index, new WarpManager.PlayerWarpData(old.getOwner(), publicWarps, old.isOnline(), featured));
+            data.set(index, new WarpManager.PlayerWarpData(old.getOwner(), old.getOwnerName(), publicWarps, old.isOnline(), featured));
         }
         itemsToDisplay = data;
 
@@ -112,7 +112,8 @@ public class MainWarpsGUI extends BaseGUI {
         WarpManager.PlayerWarpData playerData = (WarpManager.PlayerWarpData) itemData;
 
         Map<String, String> customPlaceholders = new HashMap<>();
-        customPlaceholders.put("%player_name%", placeholderContext.getName() != null ? placeholderContext.getName() : placeholderContext.getUniqueId().toString().substring(0, 8));
+        String ownerName = playerData.getOwnerName();
+        customPlaceholders.put("%player_name%", ownerName != null ? ownerName : placeholderContext.getUniqueId().toString().substring(0, 8));
         customPlaceholders.put("%warp_count%", String.valueOf(playerData.getWarps().size()));
 
         String onlineStatus = "&cHors Ligne";

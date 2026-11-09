@@ -9,6 +9,7 @@ import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
 import org.Cry_Legende.sHSSBWarpsGUI.gui.BaseGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.gui.MainWarpsGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.gui.PlayerSpecificWarpsGUI;
+import org.Cry_Legende.sHSSBWarpsGUI.managers.WarpManager;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.WarpVisitManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.bukkit.Bukkit;
@@ -23,7 +24,11 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class IslandCommand {
@@ -245,34 +250,23 @@ public class IslandCommand {
 
             WarpVisitManager warpVisitManager = plugin.getWarpVisitManager();
 
-            allWarps.sort((pwd1, pwd2) -> {
-                if (pwd1.hasFeaturedWarp() != pwd2.hasFeaturedWarp()) {
-                    return pwd1.hasFeaturedWarp() ? -1 : 1;
-                }
-                Player owner1 = Bukkit.getPlayer(pwd1.getOwner().getUniqueId());
-                Player owner2 = Bukkit.getPlayer(pwd2.getOwner().getUniqueId());
-                boolean p1IsVisibleOnline = pwd1.isOnline() && owner1 != null && player.canSee(owner1);
-                boolean p2IsVisibleOnline = pwd2.isOnline() && owner2 != null && player.canSee(owner2);
-                if (p1IsVisibleOnline != p2IsVisibleOnline) {
-                    return p1IsVisibleOnline ? -1 : 1;
-                }
-                int totalVisits1 = pwd1.getWarps().stream()
-                    .mapToInt(w -> warpVisitManager.getVisitCount(pwd1.getOwner().getUniqueId(), w.getName()))
-                    .sum();
-                int totalVisits2 = pwd2.getWarps().stream()
-                    .mapToInt(w -> warpVisitManager.getVisitCount(pwd2.getOwner().getUniqueId(), w.getName()))
-                    .sum();
-
-                if (totalVisits1 != totalVisits2) {
-                    return Integer.compare(totalVisits2, totalVisits1);
-                }
-                String name1 = pwd1.getOwner().getName();
-                String name2 = pwd2.getOwner().getName();
-                if (name1 == null && name2 == null) return 0;
-                if (name1 == null) return 1;
-                if (name2 == null) return -1;
-                return name1.compareToIgnoreCase(name2);
-            });
+            // Clés de tri calculées une fois par île : le comparateur est appelé n log n fois
+            Map<WarpManager.PlayerWarpData, Boolean> visibleOnline = new IdentityHashMap<>();
+            Map<WarpManager.PlayerWarpData, Integer> totalVisits = new IdentityHashMap<>();
+            for (WarpManager.PlayerWarpData pwd : allWarps) {
+                UUID ownerId = pwd.getOwner().getUniqueId();
+                Player owner = pwd.isOnline() ? Bukkit.getPlayer(ownerId) : null;
+                visibleOnline.put(pwd, owner != null && player.canSee(owner));
+                totalVisits.put(pwd, pwd.getWarps().stream()
+                    .mapToInt(w -> warpVisitManager.getVisitCount(ownerId, w.getName()))
+                    .sum());
+            }
+            // Mis en avant, puis propriétaire en ligne et visible, puis le plus visité, puis par nom
+            allWarps.sort(Comparator
+                .comparing((WarpManager.PlayerWarpData d) -> !d.hasFeaturedWarp())
+                .thenComparing(d -> !visibleOnline.get(d))
+                .thenComparing(d -> -totalVisits.get(d))
+                .thenComparing(WarpManager.PlayerWarpData::getOwnerName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
 
             new MainWarpsGUI(plugin, player, allWarps).open();
         }, runnable -> {
