@@ -117,11 +117,8 @@ public class MainWarpsGUI extends BaseGUI {
         customPlaceholders.put("%warp_count%", String.valueOf(playerData.getWarps().size()));
 
         String onlineStatus = "&cHors Ligne";
-        if (playerData.isOnline()) {
-            Player ownerPlayer = Bukkit.getPlayer(playerData.getOwner().getUniqueId());
-            if (ownerPlayer != null && viewer.canSee(ownerPlayer)) {
-                onlineStatus = "&aEn Ligne";
-            }
+        if (playerData.isOnline() && plugin.isVisibleOnline(viewer, playerData.getOwner().getUniqueId())) {
+            onlineStatus = "&aEn Ligne";
         }
         customPlaceholders.put("%online_status%", onlineStatus);
 

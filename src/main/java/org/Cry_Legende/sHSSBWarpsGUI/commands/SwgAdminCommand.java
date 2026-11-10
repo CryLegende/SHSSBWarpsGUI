@@ -1,6 +1,7 @@
 package org.Cry_Legende.sHSSBWarpsGUI.commands;
 
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
+import org.Cry_Legende.sHSSBWarpsGUI.network.NetworkWarps;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,8 +28,17 @@ public class SwgAdminCommand implements CommandExecutor, TabCompleter {
             ChatUtils.sendMessage(sender, "&a[SHSSBWarpsGUI] Configuration rechargée avec succès !");
             return true;
         }
+        if (args.length > 0 && args[0].equalsIgnoreCase("import")) {
+            NetworkWarps network = plugin.getNetwork();
+            if (network == null) {
+                ChatUtils.sendMessage(sender, plugin.getConfig().getString("reseau.messages.import-inactif", ""));
+            } else {
+                network.importFiles(sender);
+            }
+            return true;
+        }
 
-        ChatUtils.sendMessage(sender, "&cUsage: /" + label + " reload");
+        ChatUtils.sendMessage(sender, plugin.getNetwork() == null ? "&cUsage: /" + label + " reload" : "&cUsage: /" + label + " <reload|import>");
         return true;
     }
 
@@ -37,6 +47,9 @@ public class SwgAdminCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             if ("reload".startsWith(args[0].toLowerCase())) {
                 return Collections.singletonList("reload");
+            }
+            if (plugin.getNetwork() != null && "import".startsWith(args[0].toLowerCase())) {
+                return Collections.singletonList("import");
             }
         }
         return Collections.emptyList();

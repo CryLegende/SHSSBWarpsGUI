@@ -4,7 +4,13 @@ main: org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI
 api-version: '1.20'
 author: Cry_Legende
 depend: [SuperiorSkyblock2, Vault] # PlaceholderAPI est une dépendance optionnelle (softdepend)
-softdepend: [PlaceholderAPI, ViaVersion]
+# SHNetwork et SHSkyBridge sont facultatifs : sans SHNetwork, le plugin garde son fonctionnement d'origine sur ce serveur.
+softdepend: [PlaceholderAPI, ViaVersion, SHNetwork, SHSkyBridge]
+# Chargées par Paper dans le classloader du plugin : le serveur n'embarque que les pilotes MySQL et SQLite.
+# Seul le mode réseau (favoris, visites et mises en avant en MariaDB) s'en sert.
+libraries:
+  - com.zaxxer:HikariCP:5.1.0
+  - org.mariadb.jdbc:mariadb-java-client:3.4.1
 
 commands:
   # Commande pour l'édition des warps
@@ -17,7 +23,7 @@ commands:
   # Ancienne commande, maintenant pour l'administration
   swgadmin:
     description: Commandes d'administration pour SHSSBWarpsGUI.
-    usage: "/swgadmin <reload>"
+    usage: "/swgadmin <reload|import>"
     permission: shssbwarpsgui.admin
     aliases: [shssbwarps]
 

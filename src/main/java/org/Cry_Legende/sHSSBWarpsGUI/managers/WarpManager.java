@@ -125,7 +125,9 @@ public class WarpManager {
             List<IslandWarp> accessibleWarps = entry.warps();
             boolean isAnyWarpFeatured = accessibleWarps.stream()
                 .anyMatch(w -> fwm.isFeatured(entry.ownerId(), w.getName()));
-            playerDataList.add(new PlayerWarpData(owner, entry.ownerName(), accessibleWarps, owner.isOnline(), isAnyWarpFeatured));
+            // en ligne ici ou, avec SHNetwork, sur un autre serveur du réseau (présence tenue en mémoire)
+            boolean online = owner.isOnline() || plugin.isRemoteOnline(entry.ownerId());
+            playerDataList.add(new PlayerWarpData(owner, entry.ownerName(), accessibleWarps, online, isAnyWarpFeatured));
         }
 
         // Mis en avant d'abord, puis en ligne, puis par nom ; les noms inconnus en dernier

@@ -54,7 +54,16 @@ public class IslandCommand {
                 return;
             }
             OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
-            if (target == null || !target.hasPlayedBefore()) {
+            if (plugin.getNetwork() != null) {
+                // un joueur qui n'a joué que sur un autre serveur n'a pas de fichier ici : SuperiorSkyblock2 connaît tous les joueurs du réseau
+                SuperiorPlayer known = SuperiorSkyblockAPI.getPlayers().getSuperiorPlayer(args[0]);
+                if (known != null) {
+                    target = Bukkit.getOfflinePlayer(known.getUniqueId());
+                } else if (target == null || !target.hasPlayedBefore()) {
+                    ChatUtils.sendMessage(player, "&cLe joueur '" + args[0] + "' n'a jamais joué sur le serveur.");
+                    return;
+                }
+            } else if (target == null || !target.hasPlayedBefore()) {
                 ChatUtils.sendMessage(player, "&cLe joueur '" + args[0] + "' n'a jamais joué sur le serveur.");
                 return;
             }
@@ -141,11 +150,18 @@ public class IslandCommand {
     public List<String> getWarpsTabComplete(Player player, String[] args) {
         if (args.length == 1 && player.hasPermission("shssbwarpsgui.warps.list.other")) {
             String input = args[0].toLowerCase();
-            return Bukkit.getOnlinePlayers().stream()
+            List<String> names = Bukkit.getOnlinePlayers().stream()
                 .filter(p -> player.canSee(p))
                 .map(Player::getName)
                 .filter(name -> name.toLowerCase().startsWith(input))
                 .collect(Collectors.toList());
+            // joueurs des autres serveurs (vide sans SHNetwork)
+            for (String name : plugin.remoteOnlineNames()) {
+                if (name.toLowerCase().startsWith(input) && !names.contains(name)) {
+                    names.add(name);
+                }
+            }
+            return names;
         }
         return Collections.emptyList();
     }
@@ -255,8 +271,7 @@ public class IslandCommand {
             Map<WarpManager.PlayerWarpData, Integer> totalVisits = new IdentityHashMap<>();
             for (WarpManager.PlayerWarpData pwd : allWarps) {
                 UUID ownerId = pwd.getOwner().getUniqueId();
-                Player owner = pwd.isOnline() ? Bukkit.getPlayer(ownerId) : null;
-                visibleOnline.put(pwd, owner != null && player.canSee(owner));
+                visibleOnline.put(pwd, pwd.isOnline() && plugin.isVisibleOnline(player, ownerId));
                 totalVisits.put(pwd, pwd.getWarps().stream()
                     .mapToInt(w -> warpVisitManager.getVisitCount(ownerId, w.getName()))
                     .sum());
@@ -311,11 +326,11 @@ public class IslandCommand {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    if (player.isOnline()) warp.getIsland().warpPlayer(sPlayer, warp.getName());
+                    if (player.isOnline()) plugin.warpTo(sPlayer, warp.getIsland(), warp);
                 }
             }.runTaskLater(plugin, warmupMillis / 50);
         } else {
-            warp.getIsland().warpPlayer(sPlayer, warp.getName());
+            plugin.warpTo(sPlayer, warp.getIsland(), warp);
         }
     }
 }

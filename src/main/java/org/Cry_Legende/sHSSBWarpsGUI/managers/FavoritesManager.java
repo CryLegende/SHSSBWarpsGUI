@@ -10,10 +10,19 @@ import java.util.*;
 
 public class FavoritesManager {
 
+    /** Mode réseau : les favoris sont écrits un par un dans la base commune au lieu du fichier. */
+    public interface Sink {
+
+        void added(UUID viewer, UUID target);
+
+        void removed(UUID viewer, UUID target);
+    }
+
     private final SHSSBWarpsGUI plugin;
     private final File file;
     private FileConfiguration config;
     private final Map<UUID, List<UUID>> favoritesCache = new HashMap<>();
+    private volatile Sink sink;
 
     public FavoritesManager(SHSSBWarpsGUI plugin) {
         this.plugin = plugin;
@@ -46,7 +55,29 @@ public class FavoritesManager {
         }
     }
 
+    /**
+     * Passe en mode réseau : le fichier n'est plus écrit et la mémoire se vide, les favoris d'un joueur sont relus en
+     * base à son arrivée (voir {@link #replace}).
+     */
+    public void setSink(Sink sink) {
+        this.sink = sink;
+        favoritesCache.clear();
+    }
+
+    /** Favoris d'un joueur tels que la base les donne. À appeler sur le fil principal. */
+    public void replace(UUID viewer, Collection<UUID> targets) {
+        favoritesCache.put(viewer, new ArrayList<>(targets));
+    }
+
+    /** Oublie les favoris d'un joueur parti (mode réseau). À appeler sur le fil principal. */
+    public void forget(UUID viewer) {
+        favoritesCache.remove(viewer);
+    }
+
     public void saveFavorites() {
+        if (sink != null) {
+            return;
+        }
         for (String key : config.getKeys(false)) config.set(key, null); // Clear old
         favoritesCache.forEach((viewer, targets) -> {
             List<String> sList = new ArrayList<>();
@@ -66,8 +97,10 @@ public class FavoritesManager {
 
     public void toggleFavorite(UUID viewer, UUID target) {
         List<UUID> list = favoritesCache.computeIfAbsent(viewer, k -> new ArrayList<>());
+        boolean added;
         if (list.contains(target)) {
             list.remove(target);
+            added = false;
         } else {
             // Vérification limite (5 par défaut)
             int max = plugin.getConfig().getInt("favorites.max-count", 5);
@@ -75,8 +108,16 @@ public class FavoritesManager {
                 return; // Géré côté GUIListener pour le message d'erreur
             }
             list.add(target);
+            added = true;
         }
-        saveFavorites();
+        Sink network = sink;
+        if (network == null) {
+            saveFavorites();
+        } else if (added) {
+            network.added(viewer, target);
+        } else {
+            network.removed(viewer, target);
+        }
     }
 
     public boolean canAddFavorite(UUID viewer) {

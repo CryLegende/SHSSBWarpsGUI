@@ -2,6 +2,9 @@ package org.Cry_Legende.sHSSBWarpsGUI;
 
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblock;
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
+import com.bgsoftware.superiorskyblock.api.island.Island;
+import com.bgsoftware.superiorskyblock.api.island.warps.IslandWarp;
+import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import org.Cry_Legende.sHSSBWarpsGUI.commands.CommandManager;
 import org.Cry_Legende.sHSSBWarpsGUI.commands.SwgAdminCommand;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
@@ -13,13 +16,22 @@ import org.Cry_Legende.sHSSBWarpsGUI.managers.FavoritesManager; // Import ajout�
 import org.Cry_Legende.sHSSBWarpsGUI.managers.FeaturedWarpsManager;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.WarpManager;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.WarpVisitManager;
+import org.Cry_Legende.sHSSBWarpsGUI.network.NetworkLink;
+import org.Cry_Legende.sHSSBWarpsGUI.network.NetworkWarps;
+import org.Cry_Legende.sHSSBWarpsGUI.network.ShNetworkLink;
+import org.Cry_Legende.sHSSBWarpsGUI.network.WarpDatabase;
 import org.Cry_Legende.sHSSBWarpsGUI.services.TextureService;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerChatInput;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.logging.Level;
 
 public class SHSSBWarpsGUI extends JavaPlugin {
 
@@ -36,6 +48,8 @@ public class SHSSBWarpsGUI extends JavaPlugin {
     private PlayerChatInput playerChatInputListener;
     // null sur un serveur sans dialogues (avant 1.21.6) : tout passe alors par le chat
     private WarpDialogs warpDialogs;
+    // Non nul seulement avec SHNetwork : favoris, visites et mises en avant passent par la base commune
+    private NetworkWarps network;
 
     @Override
     public void onEnable() {
@@ -71,12 +85,44 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         setupHooks();
         registerCommands();
         registerListeners();
+        enableNetwork();
 
         getLogger().info("SHSSBWarpsGUI a été activé avec succès !");
     }
 
+    /**
+     * Passe en mode réseau si SHNetwork est installé et 'reseau.actif' est vrai. Les classes qui touchent à SHNetwork
+     * ne sont résolues qu'ici : sans lui, rien n'est chargé et le plugin garde son fonctionnement d'origine.
+     */
+    private void enableNetwork() {
+        if (!getConfig().getBoolean("reseau.actif", true)) return;
+        if (!Bukkit.getPluginManager().isPluginEnabled("SHNetwork")) return;
+        WarpDatabase db = null;
+        try {
+            NetworkLink link = ShNetworkLink.open();
+            db = new WarpDatabase(
+                getConfig().getString("reseau.base-de-donnees.url"),
+                getConfig().getString("reseau.base-de-donnees.utilisateur"),
+                getConfig().getString("reseau.base-de-donnees.mot-de-passe"),
+                Math.max(250, getConfig().getInt("reseau.base-de-donnees.delai-ms", 3000)));
+            NetworkWarps warps = new NetworkWarps(this, db, link);
+            warps.start();
+            network = warps;
+            getLogger().info("SHNetwork détecté : favoris, visites et warps mis en avant partagés entre les serveurs, en base."
+                + (warps.followsIslandHosts() ? " Warps des îles hébergées ailleurs : joueur envoyé sur leur serveur." : ""));
+        } catch (RuntimeException | LinkageError e) {
+            network = null;
+            if (db != null) db.close();
+            getLogger().log(Level.SEVERE, "SHNetwork présent mais inutilisable, favoris, visites et mises en avant restent dans les fichiers de ce serveur : " + e);
+        }
+    }
+
     @Override
     public void onDisable() {
+        // Écritures en base terminées d'abord : les sauvegardes de fichiers ci-dessous ne font rien en mode réseau
+        if (network != null) {
+            network.stop();
+        }
         // Sauvegarde des données et arrêt des tâches
         if (textureService != null) {
             textureService.shutdown();
@@ -188,6 +234,46 @@ public class SHSSBWarpsGUI extends JavaPlugin {
 
     public PAPIHook getPapiHook() {
         return papiHook;
+    }
+
+    /** Mode réseau, ou null sans SHNetwork. */
+    public NetworkWarps getNetwork() {
+        return network;
+    }
+
+    /** Vrai si le joueur est connecté sur un autre serveur du réseau (toujours faux sans SHNetwork). */
+    public boolean isRemoteOnline(UUID id) {
+        return network != null && network.isOnline(id);
+    }
+
+    /**
+     * Vrai si le joueur est en ligne, ici ou sur un autre serveur du réseau, et visible pour {@code viewer} (un joueur
+     * invisible sur ce serveur ne l'est pas ; l'invisibilité d'un joueur d'un autre serveur n'est pas connue).
+     */
+    public boolean isVisibleOnline(Player viewer, UUID id) {
+        Player local = Bukkit.getPlayer(id);
+        if (local != null) {
+            return viewer.canSee(local);
+        }
+        return isRemoteOnline(id);
+    }
+
+    /** Pseudos des joueurs des autres serveurs (vide sans SHNetwork). */
+    public Collection<String> remoteOnlineNames() {
+        return network == null ? List.of() : network.onlineNames();
+    }
+
+    /**
+     * Téléporte le joueur au warp : téléportation de SuperiorSkyblock2, ou, avec SHNetwork, envoi vers le serveur qui
+     * héberge l'île du warp.
+     */
+    public void warpTo(SuperiorPlayer sPlayer, Island island, IslandWarp warp) {
+        NetworkWarps warps = network;
+        if (warps == null) {
+            island.warpPlayer(sPlayer, warp.getName());
+        } else {
+            warps.warp(sPlayer, island, warp);
+        }
     }
 
     public SuperiorSkyblock getSuperiorSkyblock() {

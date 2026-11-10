@@ -1,3 +1,30 @@
+# ======================================================================== #
+# SHSSBWarpsGUI
+#
+# Plugin : menus des warps d'île SuperiorSkyblock2 : liste des warps de tous les joueurs, favoris, mise en avant
+# payante, compteur de visites, gestion d'un warp (nom, icône, description, visibilité, suppression). Avec SHNetwork,
+# favoris, visites et mises en avant sont partagés entre les serveurs Opale (voir la section 'reseau' en bas du fichier).
+#
+# Commandes :
+#   /is warps [joueur]                        Liste des warps de tous les joueurs, ou de ceux d'un joueur.
+#   /is warp [nom]                            Warps de votre île, ou téléportation à l'un d'eux.
+#   /is editwarp <warp> <confirmicon|rename>  Confirme l'icône (objet en main) ou renomme un warp.
+#   /swgadmin reload                          Recharge la configuration (alias : /shssbwarps). Les clés de 'reseau' demandent un redémarrage.
+#   /swgadmin import                          Avec SHNetwork : copie favorites.yml, warp_visits.yml et featured_warps.yml dans la base du réseau.
+#
+# Permissions :
+#   shssbwarpsgui.use                  Ouvrir le menu des warps (par défaut : tous les joueurs).
+#   shssbwarpsgui.warps.list.all       Voir la liste de tous les warps (par défaut : tous les joueurs).
+#   shssbwarpsgui.warps.list.other     Voir les warps d'un autre joueur (par défaut : tous les joueurs).
+#   shssbwarpsgui.warp.self            Voir ses propres warps (par défaut : tous les joueurs).
+#   shssbwarpsgui.warp.teleport        Se téléporter à ses propres warps (par défaut : tous les joueurs).
+#   shssbwarpsgui.warp.edit            Éditer ses warps (par défaut : tous les joueurs).
+#   shssbwarpsgui.admin                /swgadmin (par défaut : op).
+#   shssbwarpsgui.admin.editothers     Éditer les warps d'un autre joueur (par défaut : op).
+#   shssbwarpsgui.admin.featureothers  Mettre en avant le warp d'un autre joueur.
+#
+# ======================================================================== #
+
 # Messages globaux du plugin
 messages:
   no-permission-command: "&7&l« &f&lSH &8&l» &fCommande inconnue, essayez autre chose."
@@ -382,3 +409,40 @@ dialogues:
   messages:
     expire: "&7&l« &e&lSH &8&l» &7Cette fenêtre a &eexpiré&7, recommencez l'action."
     erreur: "&7&l« &c&lSH &8&l» &7Une &cerreur &7est survenue, recommencez l'action."
+
+# Favoris, visites et warps mis en avant pour tout le réseau Opale. Demande SHNetwork : sans lui, ou avec actif: false,
+# chaque serveur garde ses fichiers favorites.yml, warp_visits.yml et featured_warps.yml comme avant.
+# Avec SHNetwork :
+#   - les favoris d'un joueur sont écrits un par un en base (table shssbwarps_favorites) et relus à son arrivée sur un serveur ;
+#   - chaque visite d'un warp s'ajoute en base (table shssbwarps_visits, incrément atomique) : le total est celui de tous les serveurs ;
+#   - les warps mis en avant sont en base (table shssbwarps_featured) ; une mise en avant échue est retirée une seule fois pour
+#     le réseau, et son propriétaire est prévenu où qu'il soit ;
+#   - le statut « En Ligne » d'un propriétaire compte aussi les joueurs connectés sur les autres serveurs ;
+#   - /is warps <pseudo> et la complétion connaissent les joueurs des autres serveurs ;
+#   - avec SHSkyBridge, un warp d'une île hébergée par un autre serveur y envoie le joueur, à l'emplacement du warp.
+# Les fichiers ne sont plus lus ni écrits en mode réseau : /swgadmin import les copie une fois dans la base, sans rien écraser.
+# Demande un redémarrage : actif, attente-max-secondes, rafraichissement-secondes, hote-par-defaut, base-de-donnees.
+reseau:
+  actif: true
+  # Durée maximale, en secondes, pendant laquelle on attend que l'autre serveur ait fini de sauvegarder le joueur
+  # avant de relire ses favoris
+  attente-max-secondes: 10
+  # Intervalle, en secondes, entre deux relectures en base des compteurs de visites et des warps mis en avant
+  rafraichissement-secondes: 30
+  # Serveur qui héberge les îles absentes de la table island_host de SHSkyBridge. Vide : la valeur de hote-par-defaut
+  # de la configuration de SHSkyBridge
+  hote-par-defaut: ""
+  # Base partagée par tous les serveurs : tables shssbwarps_favorites, shssbwarps_visits et shssbwarps_featured
+  # (créées au démarrage) ; l'utilisateur lit aussi island_host, la table de SHSkyBridge
+  base-de-donnees:
+    url: "jdbc:mariadb://127.0.0.1:3306/bo_net"
+    utilisateur: shssbwarpsgui
+    mot-de-passe: CHANGE_ME
+    # Délai maximal de connexion et de réponse de la base, en millisecondes. Une base qui ne répond pas laisse
+    # les menus tels quels : favoris, visites et mises en avant gardent ce que ce serveur a en mémoire
+    delai-ms: 3000
+  messages:
+    import-termine: "&7&l« &a&lSH &8&l» &7Import terminé : &a%favoris% &7favoris, &a%visites% &7compteurs de visites et &a%mises_en_avant% &7mises en avant copiés dans la base du réseau."
+    import-echec: "&7&l« &c&lSH &8&l» &cImport impossible : &7%erreur%"
+    import-inactif: "&7&l« &c&lSH &8&l» &cLe mode réseau n'est pas actif sur ce serveur."
+    warp-trop-cher: "&7&l« &c&lSH &8&l» &cIl vous faut &e%cost% SHCoins&c pour vous téléporter à un warp."

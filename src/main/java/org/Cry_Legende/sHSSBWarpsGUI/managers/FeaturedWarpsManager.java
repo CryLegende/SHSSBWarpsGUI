@@ -18,11 +18,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class FeaturedWarpsManager {
+
+    /** Mode réseau : les mises en avant sont écrites dans la base commune au lieu du fichier. */
+    public interface Sink {
+
+        void saved(UUID ownerUUID, String warpName, long expiryTimestamp);
+
+        void removed(UUID ownerUUID, String warpName);
+
+        /** Une mise en avant est échue : un seul serveur la retire de la base et prévient le propriétaire. */
+        void expired(FeaturedWarpEntry entry);
+
+        /** Relit les mises en avant en base. */
+        void reload();
+    }
+
     private final SHSSBWarpsGUI plugin;
     private final File featuredWarpsFile;
     private FileConfiguration featuredWarpsConfig;
     private final Set<FeaturedWarpEntry> featuredWarps = ConcurrentHashMap.newKeySet();
     private BukkitTask expiryCheckTask; // Utiliser BukkitTask pour pouvoir l'annuler
+    private volatile Sink sink;
 
     public static class FeaturedWarpEntry {
         public final UUID ownerUUID;
@@ -81,7 +97,34 @@ public class FeaturedWarpsManager {
         startExpiryCheckTask();
     }
 
+    /** Passe en mode réseau : le fichier n'est plus lu ni écrit, les mises en avant viennent de la base. */
+    public void setSink(Sink sink) {
+        this.sink = sink;
+    }
+
+    /**
+     * Remplace les mises en avant par celles de la base, échues comprises (la tâche d'expiration les retire une fois
+     * pour tout le réseau). Peut être appelée hors du fil principal.
+     */
+    public void replaceAll(Collection<FeaturedWarpEntry> fresh) {
+        Set<FeaturedWarpEntry> wanted = new HashSet<>(fresh);
+        featuredWarps.removeIf(entry -> !wanted.contains(entry));
+        for (FeaturedWarpEntry entry : wanted) {
+            FeaturedWarpEntry known = findEntry(entry.ownerUUID, entry.warpName);
+            if (known == null) {
+                featuredWarps.add(entry);
+            } else {
+                known.expiryTimestamp = entry.expiryTimestamp;
+            }
+        }
+    }
+
     public void loadFeaturedWarps() {
+        Sink network = sink;
+        if (network != null) {
+            network.reload();
+            return;
+        }
         if (!featuredWarpsFile.exists()) {
             try {
                 featuredWarpsFile.getParentFile().mkdirs();
@@ -102,6 +145,9 @@ public class FeaturedWarpsManager {
     }
 
     public void saveFeaturedWarps() {
+        if (sink != null) {
+            return;
+        }
         if (featuredWarpsConfig == null) {
             plugin.getLogger().warning("featuredWarpsConfig est null. Impossible de sauvegarder les warps mis en avant.");
             return; // Eviter NPE si le fichier n'a pas pu être chargé/créé
@@ -154,14 +200,24 @@ public class FeaturedWarpsManager {
             featuredWarps.add(new FeaturedWarpEntry(ownerUUID, warpName, expiryTimestamp));
             plugin.getLogger().info("Nouveau warp mis en avant ajouté: " + warpName + " de " + ownerUUID);
         }
-        saveFeaturedWarps(); // Sauvegarder après modification
+        Sink network = sink;
+        if (network == null) {
+            saveFeaturedWarps(); // Sauvegarder après modification
+        } else {
+            network.saved(ownerUUID, existingEntry != null ? existingEntry.warpName : warpName, expiryTimestamp);
+        }
     }
 
     public void removeFeaturedWarp(UUID ownerUUID, String warpName) {
         boolean removed = featuredWarps.removeIf(entry -> entry.ownerUUID.equals(ownerUUID) && entry.warpName.equalsIgnoreCase(warpName));
         if (removed) {
             plugin.getLogger().info("Warp mis en avant retiré: " + warpName + " de " + ownerUUID);
-            saveFeaturedWarps();
+            Sink network = sink;
+            if (network == null) {
+                saveFeaturedWarps();
+            } else {
+                network.removed(ownerUUID, warpName);
+            }
         }
     }
 
@@ -186,6 +242,35 @@ public class FeaturedWarpsManager {
         }
     }
 
+    /**
+     * Prévient le propriétaire d'une mise en avant échue, s'il est connecté à ce serveur, et l'écrit dans la console
+     * si {@code log} est vrai.
+     */
+    public void notifyExpired(UUID ownerUUID, String warpName, boolean log) {
+        OfflinePlayer owner = Bukkit.getOfflinePlayer(ownerUUID);
+        String ownerName = PlayerNames.of(owner, ownerUUID.toString().substring(0, 6));
+
+        // Préparer les placeholders pour le message
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("%warp_name%", warpName);
+        placeholders.put("%owner_name%", ownerName);
+        // Pas besoin de %duration% ou %cost% ici car c'est un message d'expiration
+
+        String message = plugin.getConfigManager().msgFeatureExpired; // Obtenir le template du message
+        message = ChatUtils.setPlaceholders(owner, message); // Appliquer PAPI au template
+        // Appliquer nos placeholders custom après PAPI
+        for (Map.Entry<String, String> pEntry : placeholders.entrySet()) {
+            message = message.replace(pEntry.getKey(), pEntry.getValue());
+        }
+
+        if (log) {
+            plugin.getLogger().info(ChatUtils.color(message)); // Log pour admin
+        }
+        if (owner.isOnline() && owner.getPlayer() != null) {
+            ChatUtils.sendMessage(owner.getPlayer(), message);
+        }
+    }
+
     private class ExpiryCheckTask extends BukkitRunnable {
         @Override
         public void run() {
@@ -197,25 +282,11 @@ public class FeaturedWarpsManager {
                 if (entry.isExpired()) {
                     toRemove.add(entry);
                     changed = true;
-                    OfflinePlayer owner = Bukkit.getOfflinePlayer(entry.ownerUUID);
-                    String ownerName = PlayerNames.of(owner, entry.ownerUUID.toString().substring(0, 6));
-
-                    // Préparer les placeholders pour le message
-                    Map<String, String> placeholders = new HashMap<>();
-                    placeholders.put("%warp_name%", entry.warpName);
-                    placeholders.put("%owner_name%", ownerName);
-                    // Pas besoin de %duration% ou %cost% ici car c'est un message d'expiration
-
-                    String message = plugin.getConfigManager().msgFeatureExpired; // Obtenir le template du message
-                    message = ChatUtils.setPlaceholders(owner, message); // Appliquer PAPI au template
-                    // Appliquer nos placeholders custom après PAPI
-                    for (Map.Entry<String, String> pEntry : placeholders.entrySet()) {
-                        message = message.replace(pEntry.getKey(), pEntry.getValue());
-                    }
-
-                    plugin.getLogger().info(ChatUtils.color(message)); // Log pour admin
-                    if (owner.isOnline() && owner.getPlayer() != null) {
-                        ChatUtils.sendMessage(owner.getPlayer(), message);
+                    Sink network = sink;
+                    if (network == null) {
+                        notifyExpired(entry.ownerUUID, entry.warpName, true);
+                    } else {
+                        network.expired(entry);
                     }
                 }
             }

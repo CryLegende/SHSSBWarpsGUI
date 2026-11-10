@@ -23,6 +23,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WarpVisitManager {
 
+    /** Mode réseau : chaque visite est ajoutée par incrément atomique dans la base commune au lieu du fichier. */
+    public interface Sink {
+
+        void counted(UUID owner, String warpKey);
+    }
+
     private final SHSSBWarpsGUI plugin;
     private final File visitsFile;
 
@@ -31,6 +37,7 @@ public class WarpVisitManager {
 
     private final long cooldownMillis;
     private final AtomicBoolean dirty = new AtomicBoolean(false);
+    private volatile Sink sink;
 
     public WarpVisitManager(SHSSBWarpsGUI plugin) {
         this.plugin = plugin;
@@ -79,6 +86,9 @@ public class WarpVisitManager {
      * brutal ne tronque pas le fichier). Peut être appelée hors du thread principal.
      */
     public synchronized void saveVisits() {
+        if (sink != null) {
+            return;
+        }
         dirty.set(false);
         YamlConfiguration config = new YamlConfiguration();
         ConfigurationSection visitsSection = config.createSection("visits");
@@ -119,6 +129,22 @@ public class WarpVisitManager {
                 saveVisits();
             }
         }, 20L * 300, 20L * 300);
+    }
+
+    /** Passe en mode réseau : le fichier n'est plus écrit, les compteurs viennent de la base (voir {@link #replaceAll}). */
+    public void setSink(Sink sink) {
+        this.sink = sink;
+    }
+
+    /** Remplace les compteurs par ceux de la base. Peut être appelée hors du fil principal. */
+    public void replaceAll(Map<UUID, Map<String, Integer>> fresh) {
+        fresh.forEach((owner, warps) -> visitCounts.put(owner, new ConcurrentHashMap<>(warps)));
+        visitCounts.keySet().removeIf(owner -> !fresh.containsKey(owner));
+    }
+
+    /** Total d'un warp tel que la base vient de le rendre après une visite. */
+    public void setVisitCount(UUID ownerUuid, String warpKey, int count) {
+        visitCounts.computeIfAbsent(ownerUuid, k -> new ConcurrentHashMap<>()).put(warpKey, count);
     }
 
     public int getVisitCount(UUID ownerUuid, String warpName) {
@@ -163,7 +189,12 @@ public class WarpVisitManager {
         Map<String, Integer> ownerWarps = visitCounts.computeIfAbsent(ownerUuid, k -> new ConcurrentHashMap<>());
         int newCount = ownerWarps.getOrDefault(warpName, 0) + 1;
         ownerWarps.put(warpName, newCount);
-        dirty.set(true);
+        Sink network = sink;
+        if (network == null) {
+            dirty.set(true);
+        } else {
+            network.counted(ownerUuid, warpName);
+        }
 
         visitCooldowns.computeIfAbsent(visitorUuid, k -> new ConcurrentHashMap<>()).put(uniqueWarpId, now + this.cooldownMillis);
     }

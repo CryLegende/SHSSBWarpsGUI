@@ -443,12 +443,12 @@ public class GuiListener implements Listener {
                     @Override
                     public void run() {
                         if (player.isOnline() && sPlayer.asPlayer().isOnline()) {
-                            island.warpPlayer(sPlayer, targetWarp.getName());
+                            plugin.warpTo(sPlayer, island, targetWarp);
                         }
                     }
                 }.runTaskLater(plugin, warmupMillis / 50);
             } else {
-                island.warpPlayer(sPlayer, targetWarp.getName());
+                plugin.warpTo(sPlayer, island, targetWarp);
                 player.closeInventory();
             }
         }

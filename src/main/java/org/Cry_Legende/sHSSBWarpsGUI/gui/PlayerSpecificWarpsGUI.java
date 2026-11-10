@@ -59,7 +59,10 @@ public class PlayerSpecificWarpsGUI extends BaseGUI {
             List<SuperiorPlayer> members = island.getIslandMembers(true);
             long onlineMembers = members.stream().filter(member -> {
                 Player memberPlayer = member.asPlayer();
-                return memberPlayer != null && viewer.canSee(memberPlayer);
+                if (memberPlayer != null) {
+                    return viewer.canSee(memberPlayer);
+                }
+                return plugin.isRemoteOnline(member.getUniqueId());
             }).count();
 
             customPlaceholders.put("%island_members_online%", String.valueOf(onlineMembers));
