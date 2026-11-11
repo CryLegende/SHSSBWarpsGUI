@@ -155,11 +155,11 @@ final class Dialogs implements Listener {
     }
 
     /**
-     * Texte de la section dialogues, sans valeur par défaut explicite : une clé absente du config.yml du serveur retombe
-     * sur celle du config.yml embarqué dans le jar (les défauts que Bukkit attache à getConfig()).
+     * Texte de la section dialogues de messages.yml, sans valeur par défaut explicite : une clé absente du fichier du
+     * serveur retombe sur celle du messages.yml embarqué dans le jar.
      */
     String configText(String path) {
-        String value = plugin.getConfig().getString("dialogues." + path);
+        String value = plugin.getTexts().getString("dialogues." + path);
         return value == null ? "" : value;
     }
 

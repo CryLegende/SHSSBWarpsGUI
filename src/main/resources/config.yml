@@ -5,12 +5,17 @@
 # payante, compteur de visites, gestion d'un warp (nom, icône, description, visibilité, suppression). Avec SHNetwork,
 # favoris, visites et mises en avant sont partagés entre les serveurs Opale (voir la section 'reseau' en bas du fichier).
 #
-# Commandes :
+# Commandes joueur (sous-commandes de /is de SuperiorSkyblock2, interceptées par le plugin) :
 #   /is warps [joueur]                        Liste des warps de tous les joueurs, ou de ceux d'un joueur.
 #   /is warp [nom]                            Warps de votre île, ou téléportation à l'un d'eux.
 #   /is editwarp <warp> <confirmicon|rename>  Confirme l'icône (objet en main) ou renomme un warp.
-#   /swgadmin reload                          Recharge la configuration (alias : /shssbwarps). Les clés de 'reseau' demandent un redémarrage.
-#   /swgadmin import                          Avec SHNetwork : copie favorites.yml, warp_visits.yml et featured_warps.yml dans la base du réseau.
+#
+# Administration (anciens noms : /swgadmin, /shssbwarps) :
+#   /shssbwarpsgui reload      Recharge config.yml et messages.yml ; si un fichier est illisible, l'ancienne
+#                              configuration reste active. Ne touche ni aux favoris, ni aux visites, ni aux warps mis
+#                              en avant. La section reseau demande un redémarrage.
+#   /shssbwarpsgui import      Avec SHNetwork : copie favorites.yml, warp_visits.yml et featured_warps.yml dans la base du réseau.
+#   /shssbwarpsgui featured    Liste les warps mis en avant avec leur propriétaire et leur échéance.
 #
 # Permissions :
 #   shssbwarpsgui.use                  Ouvrir le menu des warps (par défaut : tous les joueurs).
@@ -19,44 +24,24 @@
 #   shssbwarpsgui.warp.self            Voir ses propres warps (par défaut : tous les joueurs).
 #   shssbwarpsgui.warp.teleport        Se téléporter à ses propres warps (par défaut : tous les joueurs).
 #   shssbwarpsgui.warp.edit            Éditer ses warps (par défaut : tous les joueurs).
-#   shssbwarpsgui.admin                /swgadmin (par défaut : op).
+#   shssbwarpsgui.admin                Toutes les sous-commandes de /shssbwarpsgui (par défaut : op).
+#   shssbwarpsgui.admin.reload         reload (par défaut : op).
+#   shssbwarpsgui.admin.import         import (par défaut : op).
+#   shssbwarpsgui.admin.featured       featured (par défaut : op).
 #   shssbwarpsgui.admin.editothers     Éditer les warps d'un autre joueur (par défaut : op).
-#   shssbwarpsgui.admin.featureothers  Mettre en avant le warp d'un autre joueur.
+#   shssbwarpsgui.admin.featureothers  Mettre en avant le warp d'un autre joueur (par défaut : op).
+#
+# Les textes des messages, des saisies en dialogue et des confirmations sont dans messages.yml ; les menus (titres,
+# noms et descriptions des objets) restent ici avec leur disposition.
 #
 # ======================================================================== #
 
-# Messages globaux du plugin
-messages:
-  no-permission-command: "&7&l« &f&lSH &8&l» &fCommande inconnue, essayez autre chose."
-  no-permission-feature: "&7&l« &c&lSH &8&l» &cVous ne pouvez pas mettre un warp en avant ou de gérer cette fonctionnalité."
-  player-only-command: "&7&l« &c&lSH &8&l» &cCette commande est réservée aux joueurs."
-  warp-not-found: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7est introuvable sur l'île."
-  island-not-found: "&7&l« &c&lSH &8&l» &cVous devez être sur une île ou l'île spécifiée est introuvable."
-  not-your-warp: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name%&7 ne vous appartient pas." # Placeholder %warp_name% est crucial ici
-  generic-error: "&7&l« &c&lSH &8&l» &cUne erreur est survenue. Veuillez réessayer ou contacter un administrateur."
-  teleporting: "&7&l« &a&lSH &8&l» &7Téléportation vers &e%warp_name%&7..." # Nouveau
-  teleport-warmup: "&7&l« &6&lSH &8&l» &7Téléportation dans &e%time% seconde(s)&7... Bougez pour annuler." # Nouveau, %time% sera remplacé
-  action-cancelled: "&7&l« &e&lSH &8&l» &cAction annulée." # Nouveau
-  pending-input-action-cancelled: "&7&l« &e&lSH &8&l» &7Saisie en attente annulée." # Nouveau
-  max-lore-lines-reached: "&7&l« &c&lSH &8&l» &7Vous avez atteint le nombre maximum de &c%max_lines% &7lignes pour la description." # %max_lines%
-  # Instructions pour PlayerChatInput (et commandes liées au ManageWarpGUI)
-  instruction-rename: "&7&l« &6&lSH &8&l» &7Tapez le nouveau nom pour le warp &e%warp_name% &7dans le chat. Longueur max: &6%max_length% caractères&7. Tapez '&cannuler&7' pour abandonner." # %warp_name%, %max_length%
-  instruction-seticon: "&7&l« &6&lSH &8&l» &7Placez l'item désiré dans votre main principale et tapez &e[/is editwarp %warp_name% confirmicon]&7. Tapez '&cannuler&7' pour abandonner cette action." # %command_confirm_icon% (sera /swg confirmicon %warp_name%)
-  instruction-setdesc: "&7&l« &6&lSH &8&l» &7Tapez la nouvelle description (lore) pour &e%warp_name%&7. Utilisez &6// &7pour une nouvelle ligne. Max &6%max_lines% lignes&7. Tapez '&afin&7' pour terminer, '&cclear&7' pour effacer, ou '&cannuler&7' pour abandonner." # %warp_name%, %max_lines%
-
-# Messages spécifiques à la gestion des warps (utilisés par ManageWarpGUI et commandes)
-manage-warp-messages:
-  renamed: "&7&l« &a&lSH &8&l» &7Le warp &e%old_warp_name% &7a été renommé en &6%new_warp_name%&7."
-  icon-set: "&7&l« &a&lSH &8&l» &7L'icône du warp &e%warp_name% &7a été mise à jour."
-  desc-set: "&7&l« &a&lSH &8&l» &7La description (lore) du warp &e%warp_name% &7a été mise à jour."
-  location-set: "&7&l« &a&lSH &8&l» &7La position du warp &e%warp_name% &7a été définie à votre emplacement actuel."
-  privacy-set: "&7&l« &a&lSH &8&l» &7La visibilité du warp &e%warp_name% &7est maintenant: %status%&7." # %status% sera &cPrivé ou &aPublic
-  deleted: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7a été supprimé avec succès."
-  delete-confirm-instruction: "&7&l« &c&lSH &8&l» &cÊtes-vous sûr de vouloir supprimer le warp '&e%warp_name%&c'?\n&cTapez &b/%label% deletewarp %warp_name% confirm &cpour confirmer."
-
+# Récupération des skins des joueurs pour les têtes des menus.
 texture-service:
   fetch-timeout:
+    # Délai de connexion, en millisecondes.
     connect: 5000
+    # Délai de lecture, en millisecondes.
     read: 7000
 
 main-gui:
@@ -116,10 +101,6 @@ favorites:
   max-count: 5
   lore-action: "&8&o(( &6&oShift-Clic pour mettre en favori &8&o))"
   lore-action-remove: "&8&o(( &c&oShift-Clic pour retirer des favoris &8&o))"
-  messages:
-    added: "&7&l« &a&lSH &8&l» &aJoueur ajouté à vos favoris !"
-    removed: "&7&l« &e&lSH &8&l» &eJoueur retiré de vos favoris."
-    full: "&7&l« &c&lSH &8&l» &cVous avez atteint la limite de 5 favoris."
   lore-indicator:
     - ""
     - "&e⭐ &6Dans vos favoris"
@@ -220,17 +201,6 @@ player-warps-gui:
       - "&8&o(( &c&oCliquez pour retirer une mise en avant &8&o))"
     action: "CONFIRM_UNFEATURE_THIS_WARP"
     glow: false
-
-# --- Textes pour le GUI de Confirmation de Mise en Avant ---
-feature-confirmation-gui-texts:
-  title-feature: "&lWarps &8| Ajout Mise en avant" # %warp_name% peut être utilisé ici (géré par GuiListener)
-  title-unfeature: "&lWarps &8| Retrait Mise en avant"
-  cancel-button:
-    name: "&C⤾ Retour &7(Clic)"
-    lore:
-      - ""
-      - "&8ᴀᴜᴄᴜɴ ᴄʜᴀɴɢᴇᴍᴇɴᴛ ɴᴇ ѕᴇʀᴀ ᴀᴘᴘʟɪǫᴜᴇ."
-      - ""
 
 # --- GUI de Gestion d'un Warp Spécifique ---
 manage-warp-gui:
@@ -346,22 +316,11 @@ featured-warps:
   duration: "3d" # Durée de la mise en avant (ex: 7d, 24h, 30m, 1w)
   duration-format: "%d%j, %h%h, %m%m" # Format d'affichage de la durée. %j, %heure_s%, %minute_s% gèrent le pluriel.
   date-format: "dd/MM/yyyy 'à' HH:mm:ss" # Format d'affichage des dates d'expiration
-  messages:
-    success: "&7&l« &a&lSH &8&l» &7Le warp &e%warp_name% &7maintenant mis en avant pour &6%duration%&7."
-    removed: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7n'est plus mis en avant."
-    not-enough-money: |-
-      &7&l« &c&lSH &8&l» &cVous n'avez pas assez d'argent.
-      &7&l« &c&lSH &8&l» &cIl vous faut &e%cost% SHCoins&c.
-    already-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' est déjà en avant. Il expire le: &e%feature_expiry_date%&c."
-    not-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' n'est pas mis en avant."
-    no-warps-to-feature: "&7&l« &c&lSH &8&l» &cVous n'avez aucun warp à mettre en avant." # Typiquement si un joueur essaie de mettre en avant mais n'a pas de warps
-    expired: "&7&l« &6&lSH &8&l» &6La mise en avant du warp '&e%warp_name%&6' de &e%owner_name%&6 a expiré."
 
-# --- Saisies par dialogue natif Minecraft (clients 1.21.6 et plus) ---
-# Renommer un warp, modifier sa description (champ multiligne) et confirmer sa suppression s'ouvrent dans une fenêtre
-# avec les boutons Valider / Annuler (Échap annule). Les clients plus anciens, ou actif: false, gardent exactement la
-# saisie dans le chat et le menu de confirmation d'avant. Les textes acceptent les codes & ;
-# %warp_name% = nom du warp, %max_length% = longueur maximale du nom, %max_lines% = lignes maximales de la description.
+# Saisies par dialogue natif Minecraft (clients 1.21.6 et plus) : renommer un warp, modifier sa description (champ
+# multiligne) et confirmer sa suppression s'ouvrent dans une fenêtre avec les boutons Valider / Annuler (Échap annule).
+# Les clients plus anciens, ou actif: false, gardent la saisie dans le chat et le menu de confirmation. Les textes sont
+# dans messages.yml, section dialogues.
 dialogues:
   actif: true
   # Version de protocole minimale du client pour recevoir un dialogue (771 = 1.21.6).
@@ -369,46 +328,16 @@ dialogues:
   min-protocol: 771
   # Durée de validité d'une fenêtre ouverte, en secondes : au-delà, le clic est refusé.
   expiration: 600
-  boutons:
-    valider: "&a&lValider"
-    annuler: "&c&lAnnuler"
   renommer:
-    titre: "&6&lRenommer le warp"
-    corps:
-      - "&7Warp actuel : &e%warp_name%"
-      - "&7Longueur maximale : &6%max_length% caractères visibles&7. Vous pouvez y inclure des &bcodes couleurs&7."
-    champ: "&fNouveau nom"
     # nombre maximal de caractères saisis (codes couleurs compris), comme un message du chat
     longueur-max: 256
   description:
-    titre: "&2&lDescription du warp"
-    corps:
-      - "&7Warp : &e%warp_name%"
-      - "&7Une ligne de description par ligne du champ, &6%max_lines% lignes maximum&7. Chaque ligne est grise sauf si elle commence par un &bcode couleur&7."
-      - "&7Laissez le champ vide pour effacer la description."
-    champ: "&fDescription"
     # nombre maximal de caractères d'une ligne, comme un message du chat
     longueur-ligne-max: 256
     # hauteur du champ, en pixels
     hauteur: 100
     # true : le champ contient la description actuelle, à modifier ; false : il démarre vide
     pre-remplir: true
-  suppression:
-    titre: "&4&lSupprimer le warp ?"
-    corps:
-      - "&7Le warp &c%warp_name%&7 sera effacé."
-      - "&4Cette action est irréversible !"
-    oui: "&c&lOui, supprimer"
-    non: "&a&lNon, annuler"
-  # Erreurs affichées en rouge en tête de la fenêtre, qui se rouvre avec le texte déjà saisi
-  erreurs:
-    nom-invalide: "&cLe nom du warp est invalide ou trop long (max %max_length% caractères visibles)."
-    nom-existe: "&cUn warp nommé '&e%new_name%&c' existe déjà sur votre île."
-    description-trop-longue: "&cLa description est trop longue."
-    description-lignes: "&cVous avez atteint le nombre maximum de &e%max_lines% &clignes pour la description."
-  messages:
-    expire: "&7&l« &e&lSH &8&l» &7Cette fenêtre a &eexpiré&7, recommencez l'action."
-    erreur: "&7&l« &c&lSH &8&l» &7Une &cerreur &7est survenue, recommencez l'action."
 
 # Favoris, visites et warps mis en avant pour tout le réseau Opale. Demande SHNetwork : sans lui, ou avec actif: false,
 # chaque serveur garde ses fichiers favorites.yml, warp_visits.yml et featured_warps.yml comme avant.
@@ -420,7 +349,7 @@ dialogues:
 #   - le statut « En Ligne » d'un propriétaire compte aussi les joueurs connectés sur les autres serveurs ;
 #   - /is warps <pseudo> et la complétion connaissent les joueurs des autres serveurs ;
 #   - avec SHSkyBridge, un warp d'une île hébergée par un autre serveur y envoie le joueur, à l'emplacement du warp.
-# Les fichiers ne sont plus lus ni écrits en mode réseau : /swgadmin import les copie une fois dans la base, sans rien écraser.
+# Les fichiers ne sont plus lus ni écrits en mode réseau : /shssbwarpsgui import les copie une fois dans la base, sans rien écraser.
 # Demande un redémarrage : actif, attente-max-secondes, rafraichissement-secondes, hote-par-defaut, base-de-donnees.
 reseau:
   actif: true

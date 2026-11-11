@@ -64,7 +64,6 @@ public class ConfigManager {
     public String msgActionCancelled;
     public String msgPendingInputActionCancelled;
     public String msgMaxLoreLinesReached;
-    public String msgDeleteConfirmInstruction;
 
     public String msgFeaturedSuccess, msgFeaturedRemoved, msgNotEnoughMoney, msgAlreadyFeatured, msgNotFeatured, msgNoWarpsToFeature, msgFeatureExpired;
 
@@ -85,6 +84,8 @@ public class ConfigManager {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         config = plugin.getConfig();
+        // Les textes sont dans messages.yml, aux mêmes chemins que l'ancien config.yml
+        FileConfiguration texts = plugin.getTexts();
 
         // Chargement de la configuration pour le compteur de visites
         ConfigurationSection visitCounterSection = config.getConfigurationSection("visit-counter");
@@ -102,7 +103,7 @@ public class ConfigManager {
             favoritesMaxCount = favSection.getInt("max-count", 5);
             favoriteSeparatorConfig = loadItemConfig(favSection.getConfigurationSection("separator-item"), "GRAY_STAINED_GLASS_PANE", "NONE");
 
-            ConfigurationSection favMsgSection = favSection.getConfigurationSection("messages");
+            ConfigurationSection favMsgSection = texts.getConfigurationSection("favorites.messages");
             if (favMsgSection != null) {
                 msgFavoriteAdded = favMsgSection.getString("added", "&aJoueur ajouté aux favoris !");
                 msgFavoriteRemoved = favMsgSection.getString("removed", "&cJoueur retiré des favoris.");
@@ -134,7 +135,7 @@ public class ConfigManager {
             msgLoreShiftClickUnfavorite = "&8&o(( &c&oShift-Clic pour retirer des favoris &8&o))";
         }
 
-        ConfigurationSection globalMsgSection = config.getConfigurationSection("messages");
+        ConfigurationSection globalMsgSection = texts.getConfigurationSection("messages");
         if (globalMsgSection != null) {
             msgNoPermissionCommand = globalMsgSection.getString("no-permission-command", "&cPermission refusée pour cette commande.");
             msgNoPermissionFeature = globalMsgSection.getString("no-permission-feature", "&cPermission refusée pour cette action.");
@@ -144,7 +145,7 @@ public class ConfigManager {
             msgNotYourWarp = globalMsgSection.getString("not-your-warp", "&cLe warp '%warp_name%' ne vous appartient pas.");
             msgGenericError = globalMsgSection.getString("generic-error", "&cUne erreur est survenue.");
             instructionRename = globalMsgSection.getString("instruction-rename", "&eTapez le nouveau nom pour le warp '&b%warp_name%&e' dans le chat, ou 'annuler'.");
-            instructionSetIcon = globalMsgSection.getString("instruction-seticon", "&ePlacez l'item pour la nouvelle icône du warp '&b%warp_name%&e' dans votre main et tapez &a/swg confirmicon %warp_name%&e, ou 'annuler'.");
+            instructionSetIcon = globalMsgSection.getString("instruction-seticon", "&ePlacez l'item pour la nouvelle icône du warp '&b%warp_name%&e' dans votre main et tapez &a/is editwarp %warp_name% confirmicon&e, ou 'annuler'.");
             instructionSetDesc = globalMsgSection.getString("instruction-setdesc", "&eTapez la nouvelle description (lore). Utilisez '//' pour une nouvelle ligne. Tapez 'fin' pour terminer, ou 'annuler'.");
             msgTeleporting = globalMsgSection.getString("teleporting", "&aTéléportation vers &e%warp_name%&a...");
             msgTeleportWarmup = globalMsgSection.getString("teleport-warmup", "&eTéléportation dans %time% seconde(s)...");
@@ -153,7 +154,7 @@ public class ConfigManager {
             msgMaxLoreLinesReached = globalMsgSection.getString("max-lore-lines-reached", "&cVous avez atteint le nombre maximum de %max_lines% lignes pour la description.");
 
         } else {
-            plugin.getLogger().warning("Section 'messages' manquante dans config.yml! Utilisation de messages par défaut.");
+            plugin.getLogger().warning("Section 'messages' manquante dans messages.yml! Utilisation de messages par défaut.");
             msgNoPermissionCommand = "&cPermission refusée.";
             msgNoPermissionFeature = "&cPermission refusée.";
             msgPlayerOnlyCommand = "&cJoueurs seulement.";
@@ -199,7 +200,7 @@ public class ConfigManager {
             featuredDurationFormat = featuredSection.getString("duration-format", "%d%j, %h%h, %m%min");
             featuredDateTimeFormat = featuredSection.getString("date-format", "dd/MM/yyyy 'à' HH:mm");
 
-            ConfigurationSection featureMsgSection = featuredSection.getConfigurationSection("messages");
+            ConfigurationSection featureMsgSection = texts.getConfigurationSection("featured-warps.messages");
             if (featureMsgSection != null) {
                 msgFeaturedSuccess = featureMsgSection.getString("success", "&aWarp '%warp_name%' mis en avant pour %duration%!");
                 msgFeaturedRemoved = featureMsgSection.getString("removed", "&eWarp '%warp_name%' n'est plus en avant.");
@@ -209,7 +210,7 @@ public class ConfigManager {
                 msgNoWarpsToFeature = featureMsgSection.getString("no-warps-to-feature", "&cVous n'avez pas de warp à mettre en avant.");
                 msgFeatureExpired = featureMsgSection.getString("expired", "&6La mise en avant du warp '%warp_name%' de %owner_name% a expiré.");
             } else {
-                plugin.getLogger().warning("Section 'featured-warps.messages' manquante!");
+                plugin.getLogger().warning("Section 'featured-warps.messages' manquante dans messages.yml!");
                 msgFeaturedSuccess = "&aWarp mis en avant!";
                 msgFeaturedRemoved = "&eWarp retiré.";
                 msgNotEnoughMoney = "&cPas assez d'argent.";
@@ -228,7 +229,7 @@ public class ConfigManager {
         unfeatureWarpButtonConfig = loadItemConfig(config.getConfigurationSection("player-warps-gui.unfeature-this-warp-button"),
             "REDSTONE_BLOCK", "CONFIRM_UNFEATURE_THIS_WARP");
 
-        ConfigurationSection manageWarpMsgSection = config.getConfigurationSection("manage-warp-messages");
+        ConfigurationSection manageWarpMsgSection = texts.getConfigurationSection("manage-warp-messages");
         if (manageWarpMsgSection != null) {
             msgWarpRenamed = manageWarpMsgSection.getString("renamed", "&aWarp renommé en '&e%new_warp_name%&a'.");
             msgWarpIconSet = manageWarpMsgSection.getString("icon-set", "&aIcône du warp '&e%warp_name%&a' mise à jour.");
@@ -236,26 +237,24 @@ public class ConfigManager {
             msgWarpLocSet = manageWarpMsgSection.getString("location-set", "&aPosition du warp '&e%warp_name%&a' mise à jour.");
             msgWarpPrivacySet = manageWarpMsgSection.getString("privacy-set", "&aVisibilité du warp '&e%warp_name%&a' changée en %status%.");
             msgWarpDeleted = manageWarpMsgSection.getString("deleted", "&cWarp '&e%warp_name%&c' supprimé.");
-            msgDeleteConfirmInstruction = manageWarpMsgSection.getString("delete-confirm-instruction", "&cÊtes-vous sûr de vouloir supprimer le warp '&e%warp_name%&c'?\n&cTapez &b/%label% deletewarp %warp_name% confirm &cpour confirmer.");
         } else {
-            plugin.getLogger().warning("Section 'manage-warp-messages' manquante. Utilisation de messages par défaut.");
+            plugin.getLogger().warning("Section 'manage-warp-messages' manquante dans messages.yml. Utilisation de messages par défaut.");
             msgWarpRenamed = "&aWarp renommé.";
             msgWarpIconSet = "&aIcône mise à jour.";
             msgWarpDescSet = "&aDescription mise à jour.";
             msgWarpLocSet = "&aPosition mise à jour.";
             msgWarpPrivacySet = "&aVisibilité changée.";
             msgWarpDeleted = "&cWarp supprimé.";
-            msgDeleteConfirmInstruction = "&cConfirmer suppression /cmd deletewarp %warp_name% confirm";
         }
 
-        ConfigurationSection featureConfirmGuiSection = config.getConfigurationSection("feature-confirmation-gui-texts");
+        ConfigurationSection featureConfirmGuiSection = texts.getConfigurationSection("feature-confirmation-gui-texts");
         if (featureConfirmGuiSection != null) {
             titleFeatureConfirmGui = featureConfirmGuiSection.getString("title-feature", "&2&lMettre en Avant ce Warp ?");
             titleUnfeatureConfirmGui = featureConfirmGuiSection.getString("title-unfeature", "&4&lRetirer la Mise en Avant ?");
             itemCancelNameFeatureConfirmGui = featureConfirmGuiSection.getString("cancel-button.name", "&cCanceller");
             itemCancelLoreFeatureConfirmGui = featureConfirmGuiSection.getStringList("cancel-button.lore");
         } else {
-            plugin.getLogger().warning("Section 'feature-confirmation-gui-texts' manquante. Utilisation de textes par défaut.");
+            plugin.getLogger().warning("Section 'feature-confirmation-gui-texts' manquante dans messages.yml. Utilisation de textes par défaut.");
             titleFeatureConfirmGui = "&2&lMettre en Avant ce Warp ?";
             titleUnfeatureConfirmGui = "&4&lRetirer la Mise en Avant ?";
             itemCancelNameFeatureConfirmGui = "&cCanceller";

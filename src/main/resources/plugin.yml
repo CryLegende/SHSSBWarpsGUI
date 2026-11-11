@@ -13,26 +13,16 @@ libraries:
   - org.mariadb.jdbc:mariadb-java-client:3.4.1
 
 commands:
-  # Commande pour l'édition des warps
-  is_edit:
-    description: Editer un de vos warps.
-    usage: "/is edit <warp> <option> [valeurs...]"
-    aliases: [island_edit] # Important de garder la cohérence avec /is et /island
-    permission: shssbwarpsgui.warp.edit
-
-  # Ancienne commande, maintenant pour l'administration
-  swgadmin:
-    description: Commandes d'administration pour SHSSBWarpsGUI.
-    usage: "/swgadmin <reload|import>"
-    permission: shssbwarpsgui.admin
-    aliases: [shssbwarps]
+  # Administration du plugin. Les commandes joueur (/is warps, /is warp, /is editwarp) sont des sous-commandes de /is
+  # de SuperiorSkyblock2, interceptées par le plugin.
+  shssbwarpsgui:
+    description: Administration de SHSSBWarpsGUI.
+    usage: "/shssbwarpsgui <reload|import|featured>"
+    aliases: [swgadmin, shssbwarps]
 
 permissions:
-  shssbwarpsgui.admin:
-    description: Permet d'utiliser les commandes d'administration comme /swgadmin reload.
-    default: op
   shssbwarpsgui.use:
-    description: Permission de base pour utiliser le plugin.
+    description: Ouvrir le menu des warps avec /is warps.
     default: true
   shssbwarpsgui.warps.list.all:
     description: Permet de voir la liste de tous les warps avec /is warps.
@@ -47,8 +37,27 @@ permissions:
     description: Permet de se téléporter à ses propres warps avec /is warp <nom>.
     default: true
   shssbwarpsgui.warp.edit:
-    description: Permet d'éditer ses warps avec /is edit.
+    description: Permet d'éditer ses warps avec /is editwarp.
     default: true
+  shssbwarpsgui.admin:
+    description: Toutes les sous-commandes de /shssbwarpsgui (reload, import, featured).
+    default: op
+    children:
+      shssbwarpsgui.admin.reload: true
+      shssbwarpsgui.admin.import: true
+      shssbwarpsgui.admin.featured: true
+  shssbwarpsgui.admin.reload:
+    description: /shssbwarpsgui reload, recharge config.yml et messages.yml.
+    default: op
+  shssbwarpsgui.admin.import:
+    description: /shssbwarpsgui import, copie les fichiers dans la base du réseau (mode réseau).
+    default: op
+  shssbwarpsgui.admin.featured:
+    description: /shssbwarpsgui featured, liste les warps mis en avant.
+    default: op
   shssbwarpsgui.admin.editothers:
     description: Permet d'éditer les warps d'autres joueurs (via le GUI de gestion).
+    default: op
+  shssbwarpsgui.admin.featureothers:
+    description: Permet de mettre en avant ou de retirer la mise en avant du warp d'un autre joueur.
     default: op

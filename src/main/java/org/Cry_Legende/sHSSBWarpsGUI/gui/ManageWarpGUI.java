@@ -160,9 +160,7 @@ public class ManageWarpGUI extends BaseGUI {
 
         switch (action.toUpperCase()) {
             case "EDIT_WARP_ICON":
-                messageToSend = cfgMgr.instructionSetIcon
-                    .replace("%warp_name%", warpNameFromPDC)
-                    .replace("/swg confirmicon %warp_name%", "/" + plugin.getCommand("shssbwarps").getLabel() + " confirmicon " + warpNameFromPDC);
+                messageToSend = cfgMgr.instructionSetIcon.replace("%warp_name%", warpNameFromPDC);
                 ChatUtils.sendMessage(player, messageToSend);
                 player.closeInventory();
                 break;

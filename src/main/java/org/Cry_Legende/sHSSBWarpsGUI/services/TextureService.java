@@ -46,8 +46,8 @@ public class TextureService {
 
     private final String NO_SKIN_MARKER = "NO_SKIN_DATA_SERVICE_V2"; // Changer pour forcer un refresh du cache si structure change
     private final boolean serverOfflineMode;
-    private final int connectTimeout;
-    private final int readTimeout;
+    private volatile int connectTimeout;
+    private volatile int readTimeout;
 
     // Les requêtes HTTP ne partent jamais du thread principal ni du pool commun de la JVM : deux fils dédiés suffisent
     // (Mojang limite le débit, plus de parallélisme n'apporterait que des erreurs 429).
@@ -77,11 +77,15 @@ public class TextureService {
         this.uuidMappingsFile = new File(cacheDir, "offline_uuid_to_premium.yml");
         this.serverOfflineMode = !Bukkit.getServer().getOnlineMode();
 
-        // Lire les timeouts depuis la config principale du plugin
-        this.connectTimeout = plugin.getConfig().getInt("texture-service.fetch-timeout.connect", 5000);
-        this.readTimeout = plugin.getConfig().getInt("texture-service.fetch-timeout.read", 7000);
+        reloadSettings();
 
         loadCaches();
+    }
+
+    /** Relit les délais de récupération des skins (texture-service.fetch-timeout) dans config.yml. */
+    public void reloadSettings() {
+        this.connectTimeout = plugin.getConfig().getInt("texture-service.fetch-timeout.connect", 5000);
+        this.readTimeout = plugin.getConfig().getInt("texture-service.fetch-timeout.read", 7000);
     }
 
     public void loadCaches() {

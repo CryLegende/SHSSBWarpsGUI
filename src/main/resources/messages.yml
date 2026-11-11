@@ -1,0 +1,108 @@
+# Messages de SHSSBWarpsGUI, codes couleur & et couleurs hexadécimales. Chaque section garde le chemin qu'elle avait
+# dans config.yml. Les textes des menus (titres, noms et descriptions des objets) restent dans config.yml avec leur
+# disposition ; les textes du mode réseau sont dans config.yml, section reseau.
+#
+# Placeholders courants : %warp_name% nom du warp, %owner_name% propriétaire, %time% secondes, %cost% prix,
+# %duration% durée, %feature_expiry_date% échéance, %max_lines% lignes maximales de la description, %max_length%
+# longueur maximale du nom. Dans /shssbwarpsgui : {commands} sous-commandes permises à l'expéditeur, {file} et
+# {error} fichier illisible et erreur de lecture, {count} {warp} {owner} {expiry} ligne de la liste des warps mis en avant.
+
+# Messages globaux, saisies dans le chat et commande /shssbwarpsgui
+messages:
+  no-permission-command: "&7&l« &f&lSH &8&l» &fCommande inconnue, essayez autre chose."
+  no-permission-feature: "&7&l« &c&lSH &8&l» &cVous ne pouvez pas mettre un warp en avant ou de gérer cette fonctionnalité."
+  player-only-command: "&7&l« &c&lSH &8&l» &cCette commande est réservée aux joueurs."
+  warp-not-found: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7est introuvable sur l'île."
+  island-not-found: "&7&l« &c&lSH &8&l» &cVous devez être sur une île ou l'île spécifiée est introuvable."
+  not-your-warp: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name%&7 ne vous appartient pas."
+  generic-error: "&7&l« &c&lSH &8&l» &cUne erreur est survenue. Veuillez réessayer ou contacter un administrateur."
+  teleporting: "&7&l« &a&lSH &8&l» &7Téléportation vers &e%warp_name%&7..."
+  teleport-warmup: "&7&l« &6&lSH &8&l» &7Téléportation dans &e%time% seconde(s)&7... Bougez pour annuler."
+  action-cancelled: "&7&l« &e&lSH &8&l» &cAction annulée."
+  pending-input-action-cancelled: "&7&l« &e&lSH &8&l» &7Saisie en attente annulée."
+  max-lore-lines-reached: "&7&l« &c&lSH &8&l» &7Vous avez atteint le nombre maximum de &c%max_lines% &7lignes pour la description."
+  instruction-rename: "&7&l« &6&lSH &8&l» &7Tapez le nouveau nom pour le warp &e%warp_name% &7dans le chat. Longueur max: &6%max_length% caractères&7. Tapez '&cannuler&7' pour abandonner."
+  instruction-seticon: "&7&l« &6&lSH &8&l» &7Placez l'item désiré dans votre main principale et tapez &e[/is editwarp %warp_name% confirmicon]&7. Tapez '&cannuler&7' pour abandonner cette action."
+  instruction-setdesc: "&7&l« &6&lSH &8&l» &7Tapez la nouvelle description (lore) pour &e%warp_name%&7. Utilisez &6// &7pour une nouvelle ligne. Max &6%max_lines% lignes&7. Tapez '&afin&7' pour terminer, '&cclear&7' pour effacer, ou '&cannuler&7' pour abandonner."
+  usage: "&7&l« &e&lSH &8&l» &7Utilisation : &e/shssbwarpsgui <{commands}>&7."
+  reloaded: "&7&l« &a&lSH &8&l» &7Configuration &arechargée&7. La section &ereseau &7de config.yml demande un redémarrage."
+  reload-failed: "&7&l« &c&lSH &8&l» &7Rechargement &cimpossible&7, &c{file} &7illisible : &c{error}&7. L'ancienne configuration reste active."
+  featured-header: "&7&l« &e&lSH &8&l» &7Warps mis en avant : &e{count}&7."
+  featured-line: "&8• &e{warp} &7de &f{owner} &8(&7{expiry}&8)"
+  featured-empty: "&7&l« &e&lSH &8&l» &7Aucun warp n'est mis en avant."
+  featured-permanent: "permanent"
+
+# Gestion d'un warp (menu de gestion et commandes)
+manage-warp-messages:
+  renamed: "&7&l« &a&lSH &8&l» &7Le warp &e%old_warp_name% &7a été renommé en &6%new_warp_name%&7."
+  icon-set: "&7&l« &a&lSH &8&l» &7L'icône du warp &e%warp_name% &7a été mise à jour."
+  desc-set: "&7&l« &a&lSH &8&l» &7La description (lore) du warp &e%warp_name% &7a été mise à jour."
+  location-set: "&7&l« &a&lSH &8&l» &7La position du warp &e%warp_name% &7a été définie à votre emplacement actuel."
+  privacy-set: "&7&l« &a&lSH &8&l» &7La visibilité du warp &e%warp_name% &7est maintenant: %status%&7."
+  deleted: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7a été supprimé avec succès."
+
+# Favoris
+favorites:
+  messages:
+    added: "&7&l« &a&lSH &8&l» &aJoueur ajouté à vos favoris !"
+    removed: "&7&l« &e&lSH &8&l» &eJoueur retiré de vos favoris."
+    full: "&7&l« &c&lSH &8&l» &cVous avez atteint la limite de 5 favoris."
+
+# Mise en avant d'un warp
+featured-warps:
+  messages:
+    success: "&7&l« &a&lSH &8&l» &7Le warp &e%warp_name% &7maintenant mis en avant pour &6%duration%&7."
+    removed: "&7&l« &c&lSH &8&l» &7Le warp &c%warp_name% &7n'est plus mis en avant."
+    not-enough-money: |-
+      &7&l« &c&lSH &8&l» &cVous n'avez pas assez d'argent.
+      &7&l« &c&lSH &8&l» &cIl vous faut &e%cost% SHCoins&c.
+    already-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' est déjà en avant. Il expire le: &e%feature_expiry_date%&c."
+    not-featured: "&7&l« &c&lSH &8&l» &cLe warp '&e%warp_name%&c' n'est pas mis en avant."
+    no-warps-to-feature: "&7&l« &c&lSH &8&l» &cVous n'avez aucun warp à mettre en avant."
+    expired: "&7&l« &6&lSH &8&l» &6La mise en avant du warp '&e%warp_name%&6' de &e%owner_name%&6 a expiré."
+
+# Menu de confirmation de la mise en avant
+feature-confirmation-gui-texts:
+  title-feature: "&lWarps &8| Ajout Mise en avant"
+  title-unfeature: "&lWarps &8| Retrait Mise en avant"
+  cancel-button:
+    name: "&C⤾ Retour &7(Clic)"
+    lore:
+    - ""
+    - "&8ᴀᴜᴄᴜɴ ᴄʜᴀɴɢᴇᴍᴇɴᴛ ɴᴇ ѕᴇʀᴀ ᴀᴘᴘʟɪǫᴜᴇ."
+    - ""
+
+# Fenêtres de saisie natives (clients 1.21.6 et plus) : renommer un warp, modifier sa description, confirmer sa
+# suppression. Les réglages (actif, délais, tailles) sont dans config.yml, section dialogues.
+dialogues:
+  boutons:
+    valider: "&a&lValider"
+    annuler: "&c&lAnnuler"
+  renommer:
+    titre: "&6&lRenommer le warp"
+    corps:
+    - "&7Warp actuel : &e%warp_name%"
+    - "&7Longueur maximale : &6%max_length% caractères visibles&7. Vous pouvez y inclure des &bcodes couleurs&7."
+    champ: "&fNouveau nom"
+  description:
+    titre: "&2&lDescription du warp"
+    corps:
+    - "&7Warp : &e%warp_name%"
+    - "&7Une ligne de description par ligne du champ, &6%max_lines% lignes maximum&7. Chaque ligne est grise sauf si elle commence par un &bcode couleur&7."
+    - "&7Laissez le champ vide pour effacer la description."
+    champ: "&fDescription"
+  suppression:
+    titre: "&4&lSupprimer le warp ?"
+    corps:
+    - "&7Le warp &c%warp_name%&7 sera effacé."
+    - "&4Cette action est irréversible !"
+    oui: "&c&lOui, supprimer"
+    non: "&a&lNon, annuler"
+  erreurs:
+    nom-invalide: "&cLe nom du warp est invalide ou trop long (max %max_length% caractères visibles)."
+    nom-existe: "&cUn warp nommé '&e%new_name%&c' existe déjà sur votre île."
+    description-trop-longue: "&cLa description est trop longue."
+    description-lignes: "&cVous avez atteint le nombre maximum de &e%max_lines% &clignes pour la description."
+  messages:
+    expire: "&7&l« &e&lSH &8&l» &7Cette fenêtre a &eexpiré&7, recommencez l'action."
+    erreur: "&7&l« &c&lSH &8&l» &7Une &cerreur &7est survenue, recommencez l'action."

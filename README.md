@@ -51,7 +51,7 @@ Ce qui change aussi en réseau :
 - **Liste des warps** : avec [SHSkyBridge](https://github.com/CryLegende/SHSkyBridge), chaque serveur connaît toutes les îles et tous leurs warps : la liste est celle du réseau entier sans rien lire d'autre.
 - **Téléportation à un warp d'une île hébergée par un autre serveur** : le joueur est envoyé sur le serveur de l'île, à l'emplacement du warp, après les mêmes contrôles qu'avant (warp privé, île verrouillée, joueur banni). Le plugin ne passe pas par `Island#warpPlayer` pour ces îles : SuperiorSkyblock2 y vérifie que le bloc du warp est sûr dans la copie du monde de ce serveur, qui est périmée, et avec `delete-unsafe-warps: true` il supprimerait le warp pour tout le réseau. L'hôte d'une île est lu dans la table `island_host` de SHSkyBridge ; une île sans ligne est chez `reseau.hote-par-defaut`, ou, s'il est vide, chez `hote-par-defaut` de SHSkyBridge. Sans SHSkyBridge, c'est la téléportation de SuperiorSkyblock2.
 
-`/swgadmin import` (permission `shssbwarpsgui.admin`) copie une fois `favorites.yml`, `warp_visits.yml` et `featured_warps.yml` dans la base, sans rien écraser (un favori déjà là reste, un compteur garde le plus grand total, une mise en avant l'échéance la plus tardive) ; elle peut être relancée. À faire à l'activation du mode réseau : les fichiers ne sont plus lus ensuite.
+`/shssbwarpsgui import` (permission `shssbwarpsgui.admin.import`) copie une fois `favorites.yml`, `warp_visits.yml` et `featured_warps.yml` dans la base, sans rien écraser (un favori déjà là reste, un compteur garde le plus grand total, une mise en avant l'échéance la plus tardive) ; elle peut être relancée. À faire à l'activation du mode réseau : les fichiers ne sont plus lus ensuite.
 
 L'utilisateur MariaDB de `reseau.base-de-donnees` doit pouvoir créer les trois tables (ou elles existent déjà) et lire `island_host`.
 
@@ -62,23 +62,38 @@ L'utilisateur MariaDB de `reseau.base-de-donnees` doit pouvoir créer les trois 
 
 ## Commandes
 
+Commandes joueur : ce sont des sous-commandes de `/is` de SuperiorSkyblock2, interceptées par le plugin.
+
+| Commande | Description | Permission |
+|---|---|---|
+| `/is warps [joueur]` | Liste des warps de tous les joueurs, ou de ceux d'un joueur. | `shssbwarpsgui.use`, `shssbwarpsgui.warps.list.other` |
+| `/is warp [nom]` | Warps de votre île, ou téléportation à l'un d'eux. | `shssbwarpsgui.warp.self`, `shssbwarpsgui.warp.teleport` |
+| `/is editwarp <warp> <confirmicon\|rename>` | Confirme l'icône (objet en main) ou renomme un warp. | `shssbwarpsgui.warp.edit` |
+
+Administration :
+
 | Commande | Alias | Description | Permission |
 |---|---|---|---|
-| `/is_edit` | `/island_edit` | Editer un de vos warps. | `shssbwarpsgui.warp.edit` |
-| `/swgadmin <reload\|import>` | `/shssbwarps` | Commandes d'administration pour SHSSBWarpsGUI : `reload`, et `import` (mode réseau : copie les fichiers dans la base). | `shssbwarpsgui.admin` |
+| `/shssbwarpsgui reload` | `/swgadmin`, `/shssbwarps` | Recharge `config.yml` et `messages.yml` ; si un fichier est illisible, l'ancienne configuration reste active. Ne touche ni aux favoris, ni aux visites, ni aux warps mis en avant. La section `reseau` demande un redémarrage. | `shssbwarpsgui.admin.reload` |
+| `/shssbwarpsgui import` | idem | Avec SHNetwork : copie les fichiers dans la base du réseau. | `shssbwarpsgui.admin.import` |
+| `/shssbwarpsgui featured` | idem | Liste les warps mis en avant avec leur propriétaire et leur échéance. | `shssbwarpsgui.admin.featured` |
+
+Les sous-commandes d'administration marchent aussi depuis la console.
 
 ## Permissions
 
 | Permission | Description | Par défaut |
 |---|---|---|
-| `shssbwarpsgui.admin` | Permet d'utiliser les commandes d'administration comme /swgadmin reload. | `op` |
-| `shssbwarpsgui.use` | Permission de base pour utiliser le plugin. | `true` |
-| `shssbwarpsgui.warps.list.all` | Permet de voir la liste de tous les warps avec /is warps. | `true` |
-| `shssbwarpsgui.warps.list.other` | Permet de voir les warps d'un autre joueur avec /is warps <pseudo>. | `true` |
-| `shssbwarpsgui.warp.self` | Permet de voir ses propres warps avec /is warp. | `true` |
-| `shssbwarpsgui.warp.teleport` | Permet de se téléporter à ses propres warps avec /is warp <nom>. | `true` |
-| `shssbwarpsgui.warp.edit` | Permet d'éditer ses warps avec /is edit. | `true` |
-| `shssbwarpsgui.admin.editothers` | Permet d'éditer les warps d'autres joueurs (via le GUI de gestion). | `op` |
+| `shssbwarpsgui.use` | Ouvrir le menu des warps avec `/is warps`. | `true` |
+| `shssbwarpsgui.warps.list.all` | Voir la liste de tous les warps avec `/is warps`. | `true` |
+| `shssbwarpsgui.warps.list.other` | Voir les warps d'un autre joueur avec `/is warps <pseudo>`. | `true` |
+| `shssbwarpsgui.warp.self` | Voir ses propres warps avec `/is warp`. | `true` |
+| `shssbwarpsgui.warp.teleport` | Se téléporter à ses propres warps avec `/is warp <nom>`. | `true` |
+| `shssbwarpsgui.warp.edit` | Éditer ses warps avec `/is editwarp`. | `true` |
+| `shssbwarpsgui.admin` | Toutes les sous-commandes de `/shssbwarpsgui` (parent de `admin.reload`, `admin.import`, `admin.featured`). | `op` |
+| `shssbwarpsgui.admin.reload` `.import` `.featured` | Une sous-commande de `/shssbwarpsgui`. | `op` |
+| `shssbwarpsgui.admin.editothers` | Éditer les warps d'autres joueurs (menu de gestion). | `op` |
+| `shssbwarpsgui.admin.featureothers` | Mettre en avant ou retirer la mise en avant du warp d'un autre joueur. | `op` |
 
 ## Configuration
 
@@ -86,28 +101,13 @@ Fichiers par défaut repris du serveur (secrets remplacés par `CHANGE_ME`). Cli
 
 <pre>
 plugins/SHSSBWarpsGUI/
-└── <a href="src/main/resources/config.yml">config.yml</a>   (en-tête : résumé des commandes et des permissions)
-    ├── messages, manage-warp-messages, main-gui, player-warps-gui, manage-warp-gui, featured-warps…   (inchangés)
-    ├── <a href="src/main/resources/config.yml#L365">dialogues</a>
-    │   ├── <a href="src/main/resources/config.yml#L366">actif</a>                 dialogues activés (false : chat comme avant)
-    │   ├── <a href="src/main/resources/config.yml#L369">min-protocol</a>          version de protocole minimale (771 = 1.21.6)
-    │   ├── <a href="src/main/resources/config.yml#L371">expiration</a>            validité d'une fenêtre, en secondes
-    │   ├── <a href="src/main/resources/config.yml#L372">boutons</a>               textes Valider / Annuler
-    │   ├── <a href="src/main/resources/config.yml#L375">renommer</a>              fenêtre du nom (titre, corps, champ, longueur-max)
-    │   ├── <a href="src/main/resources/config.yml#L383">description</a>           fenêtre de la description (champ multiligne, hauteur, pre-remplir)
-    │   ├── <a href="src/main/resources/config.yml#L396">suppression</a>           confirmation de suppression
-    │   ├── <a href="src/main/resources/config.yml#L404">erreurs</a>               erreurs affichées en rouge dans la fenêtre
-    │   └── <a href="src/main/resources/config.yml#L409">messages</a>              fenêtre expirée, erreur inattendue
-    └── <a href="src/main/resources/config.yml#L425">reseau</a>
-        ├── <a href="src/main/resources/config.yml#L426">actif</a>                 mode réseau (sans SHNetwork, rien n'est utilisé)
-        ├── <a href="src/main/resources/config.yml#L429">attente-max-secondes</a>  attente de la sauvegarde du serveur de départ avant de relire les favoris
-        ├── <a href="src/main/resources/config.yml#L431">rafraichissement-secondes</a>  relecture des visites et des mises en avant
-        ├── <a href="src/main/resources/config.yml#L434">hote-par-defaut</a>       hôte des îles absentes de island_host (vide : celui de SHSkyBridge)
-        ├── <a href="src/main/resources/config.yml#L437">base-de-donnees</a>       url, utilisateur, mot-de-passe, delai-ms
-        └── <a href="src/main/resources/config.yml#L444">messages</a>              import et warp payant
+├── <a href="src/main/resources/config.yml">config.yml</a>     résumé des commandes et des permissions, menus, mise en avant, favoris, compteur de visites, dialogues (réglages), skins, mode réseau
+└── <a href="src/main/resources/messages.yml">messages.yml</a>   tous les textes : messages, gestion d'un warp, favoris, mise en avant, confirmations, textes des dialogues
 </pre>
 
-Les sections `dialogues` et `reseau` sont complètes dans le jar. Le plugin ne réécrit jamais le `config.yml` du serveur : toute clé absente du fichier (la section entière ou une seule ligne) est lue dans le `config.yml` embarqué dans le jar, sans rien y copier, et les fenêtres gardent donc leurs textes (titre, boutons, champ, erreurs). Pour personnaliser un texte ou un réglage, ajoutez la clé (ou toute la section) dans le `config.yml` du serveur : elle l'emporte sur celle du jar.
+La section `reseau` (mode réseau, base de données, délais) ne sert qu'avec SHNetwork et demande un redémarrage ; ses textes (import, warp payant) restent dans `config.yml`.
+
+Le plugin ne réécrit jamais le `config.yml` ni le `messages.yml` du serveur : toute clé absente d'un fichier (la section entière ou une seule ligne) est lue dans le fichier embarqué dans le jar, sans rien y copier, et les fenêtres gardent donc leurs textes (titre, boutons, champ, erreurs). Pour personnaliser un texte ou un réglage, ajoutez la clé (ou toute la section) dans le fichier du serveur : elle l'emporte sur celle du jar. Au premier démarrage, `messages.yml` est créé avec les textes des anciennes sections de `config.yml` quand elles existent.
 
 ## Compilation
 

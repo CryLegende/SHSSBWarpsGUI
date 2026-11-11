@@ -6,8 +6,9 @@ import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.island.warps.IslandWarp;
 import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import org.Cry_Legende.sHSSBWarpsGUI.commands.CommandManager;
-import org.Cry_Legende.sHSSBWarpsGUI.commands.SwgAdminCommand;
+import org.Cry_Legende.sHSSBWarpsGUI.commands.AdminCommand;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
+import org.Cry_Legende.sHSSBWarpsGUI.config.Messages;
 import org.Cry_Legende.sHSSBWarpsGUI.dialog.WarpDialogs;
 import org.Cry_Legende.sHSSBWarpsGUI.gui.GuiListener;
 import org.Cry_Legende.sHSSBWarpsGUI.hooks.PAPIHook;
@@ -23,10 +24,13 @@ import org.Cry_Legende.sHSSBWarpsGUI.network.WarpDatabase;
 import org.Cry_Legende.sHSSBWarpsGUI.services.TextureService;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerChatInput;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +41,8 @@ public class SHSSBWarpsGUI extends JavaPlugin {
 
     private static SHSSBWarpsGUI instance;
     private ConfigManager configManager;
+    // Textes de messages.yml, avec les défauts du jar
+    private volatile YamlConfiguration texts;
     private TextureService textureService;
     private WarpManager warpManager;
     private WarpVisitManager warpVisitManager;
@@ -64,6 +70,15 @@ public class SHSSBWarpsGUI extends JavaPlugin {
 
         // Initialisation des managers et services
         this.configManager = new ConfigManager(this);
+        saveDefaultConfig();
+        // Crée messages.yml au premier démarrage, avec les textes des anciennes sections de config.yml
+        Messages.prepare(this);
+        try {
+            texts = Messages.load(this);
+        } catch (IOException | InvalidConfigurationException e) {
+            getLogger().warning("messages.yml illisible, textes du jar utilisés : " + e.getMessage());
+            texts = Messages.defaults(this);
+        }
         configManager.loadConfigs();
 
         File cacheDir = new File(getDataFolder(), "cache");
@@ -169,10 +184,61 @@ public class SHSSBWarpsGUI extends JavaPlugin {
      * Enregistre les commandes définies dans le plugin.yml.
      */
     private void registerCommands() {
-        // Enregistrement de la commande d'administration /swgadmin
-        SwgAdminCommand adminCommand = new SwgAdminCommand(this);
-        Objects.requireNonNull(getCommand("swgadmin")).setExecutor(adminCommand);
-        Objects.requireNonNull(getCommand("swgadmin")).setTabCompleter(adminCommand);
+        // Commande d'administration /shssbwarpsgui (anciens noms : /swgadmin, /shssbwarps)
+        AdminCommand adminCommand = new AdminCommand(this);
+        Objects.requireNonNull(getCommand("shssbwarpsgui")).setExecutor(adminCommand);
+        Objects.requireNonNull(getCommand("shssbwarpsgui")).setTabCompleter(adminCommand);
+    }
+
+    /**
+     * Relit config.yml et messages.yml. Les deux sont lus à part et ne remplacent l'état en cours que s'ils sont
+     * valides ; sinon l'ancienne configuration reste active. Les fichiers de données (favoris, visites, warps mis en
+     * avant, cache des textures) et la base ne sont pas touchés ; la section reseau ne se recharge pas à chaud.
+     */
+    public void reload() throws ReloadException {
+        String file = "config.yml";
+        YamlConfiguration loaded;
+        try {
+            new YamlConfiguration().load(new File(getDataFolder(), file));
+            file = "messages.yml";
+            loaded = Messages.load(this);
+        } catch (IOException | InvalidConfigurationException e) {
+            throw new ReloadException(file, e);
+        }
+        texts = loaded;
+        configManager.loadConfigs();
+        textureService.reloadSettings();
+    }
+
+    /** Fichier de configuration illisible pendant un reload. */
+    public static final class ReloadException extends Exception {
+
+        private final String file;
+        private final String detail;
+
+        ReloadException(String file, Throwable cause) {
+            super(file + " : " + firstLine(cause), cause);
+            this.file = file;
+            this.detail = firstLine(cause);
+        }
+
+        public String file() {
+            return file;
+        }
+
+        public String detail() {
+            return detail;
+        }
+
+        private static String firstLine(Throwable cause) {
+            String message = cause.getMessage() == null ? cause.toString() : cause.getMessage();
+            return message.lines().findFirst().orElse("");
+        }
+    }
+
+    /** Textes de messages.yml (les défauts du jar complètent les clés absentes). */
+    public YamlConfiguration getTexts() {
+        return texts;
     }
 
     /**
