@@ -34,15 +34,10 @@
 # Les textes des messages, des saisies en dialogue et des confirmations sont dans messages.yml ; les menus (titres,
 # noms et descriptions des objets) restent ici avec leur disposition.
 #
+# Les têtes de joueurs des menus (liste des warps, informations sur l'île) portent le skin que SHSkins connaît pour ce
+# joueur, sans réglage ici ; sans SHSkins sur le serveur, elles gardent le skin par défaut.
+#
 # ======================================================================== #
-
-# Récupération des skins des joueurs pour les têtes des menus.
-texture-service:
-  fetch-timeout:
-    # Délai de connexion, en millisecondes.
-    connect: 5000
-    # Délai de lecture, en millisecondes.
-    read: 7000
 
 main-gui:
   title: "&8&lMenu &8| Warps des joueurs"

@@ -1,8 +1,7 @@
 package org.Cry_Legende.sHSSBWarpsGUI.utils;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
+import org.Cry_Legende.sHSSBWarpsGUI.hooks.SkinHeads;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.enchantments.Enchantment;
@@ -11,11 +10,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList; // Pour lore vide
 import java.util.Collections; // Pour lore vide
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ItemStackBuilder {
@@ -115,28 +112,10 @@ public class ItemStackBuilder {
         return this;
     }
 
+    // Tête du joueur avec son skin (SHSkins, voir SkinHeads)
     public ItemStackBuilder setSkullOwner(OfflinePlayer owner) {
         if (itemMeta instanceof SkullMeta && owner != null) {
-            SkullMeta skullMeta = (SkullMeta) itemMeta;
-            skullMeta.setOwningPlayer(owner);
-        }
-        return this;
-    }
-
-    // Cette méthode pour appliquer une texture Base64 est surtout utile pour TextureService.
-    // L'ItemStackBuilder standard devrait plutôt utiliser setSkullOwner ou setPlayerProfile.
-    public ItemStackBuilder setSkullTexture(String base64Texture) {
-        if (itemMeta instanceof SkullMeta && base64Texture != null && !base64Texture.isEmpty()) {
-            SkullMeta skullMeta = (SkullMeta) itemMeta;
-            GameProfile profile = new GameProfile(UUID.randomUUID(), "SHSSBWarpsGUIProfile"); // Nom non-null
-            profile.getProperties().put("textures", new Property("textures", base64Texture));
-            try {
-                Field profileField = skullMeta.getClass().getDeclaredField("profile");
-                profileField.setAccessible(true);
-                profileField.set(skullMeta, profile);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                SHSSBWarpsGUI.getInstance().getLogger().severe("Erreur lors de l'application de la texture de tête (reflexion) dans ItemStackBuilder: " + e.getMessage());
-            }
+            SkinHeads.apply((SkullMeta) itemMeta, owner);
         }
         return this;
     }

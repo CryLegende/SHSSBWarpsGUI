@@ -8,6 +8,7 @@ import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfiguredItem;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ItemConfig;
+import org.Cry_Legende.sHSSBWarpsGUI.hooks.SkinHeads;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.FeaturedWarpsManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerNames;
@@ -19,7 +20,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -85,29 +85,14 @@ public class PlayerSpecificWarpsGUI extends BaseGUI {
                 ItemStack itemStack = buildItemFromConfig(configuredItem.itemConfig, warpOwnerOffline, customPlaceholders);
                 if (itemStack == null || itemStack.getType() == Material.AIR) continue;
 
+                if ("PLAYER_INFO_HEAD".equalsIgnoreCase(configuredItem.itemConfig.action) && itemStack.getType() == Material.PLAYER_HEAD) {
+                    SkinHeads.apply(itemStack, warpOwnerOffline);
+                }
+
                 for (int slot : configuredItem.slots) {
                     if (slot >= 0 && slot < guiConfig.size) {
                         inventory.setItem(slot, itemStack.clone());
                     }
-                }
-
-                if ("PLAYER_INFO_HEAD".equalsIgnoreCase(configuredItem.itemConfig.action) && itemStack.getType() == Material.PLAYER_HEAD) {
-                    plugin.getTextureService().getPlayerHead(warpOwnerOffline, texturedHead -> {
-                        if (inventory.getViewers().isEmpty() || texturedHead == null || !(texturedHead.getItemMeta() instanceof SkullMeta))
-                            return;
-
-                        SkullMeta texturedMeta = (SkullMeta) texturedHead.getItemMeta();
-                        if (texturedMeta.getPlayerProfile() == null) return;
-
-                        for (int slot : configuredItem.slots) {
-                            ItemStack currentItem = inventory.getItem(slot);
-                            if (currentItem != null && currentItem.getItemMeta() instanceof SkullMeta) {
-                                SkullMeta finalMeta = (SkullMeta) currentItem.getItemMeta();
-                                finalMeta.setPlayerProfile(texturedMeta.getPlayerProfile());
-                                currentItem.setItemMeta(finalMeta);
-                            }
-                        }
-                    });
                 }
             }
         }

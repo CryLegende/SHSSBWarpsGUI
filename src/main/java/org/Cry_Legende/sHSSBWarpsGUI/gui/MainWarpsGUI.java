@@ -4,9 +4,9 @@ import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
 import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.island.warps.IslandWarp;
 import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
-import com.destroystokyo.paper.profile.PlayerProfile;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ItemConfig;
+import org.Cry_Legende.sHSSBWarpsGUI.hooks.SkinHeads;
 import org.Cry_Legende.sHSSBWarpsGUI.managers.WarpManager;
 // ItemStackBuilder n'est pas importé car buildItemFromConfig est dans BaseGUI
 import org.bukkit.Bukkit;
@@ -14,8 +14,6 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,43 +171,9 @@ public class MainWarpsGUI extends BaseGUI {
         setItemPersistentData(displayItem, TARGET_PLAYER_UUID_KEY, placeholderContext.getUniqueId().toString());
 
         if (displayItem.getType() == Material.PLAYER_HEAD) {
-            return applyTextureAsync(displayItem, placeholderContext);
+            SkinHeads.apply(displayItem, placeholderContext);
         }
 
         return displayItem;
-    }
-
-    private ItemStack applyTextureAsync(ItemStack itemToTexture, OfflinePlayer owner) {
-        ItemStack finalDisplayItem = itemToTexture.clone();
-
-        plugin.getTextureService().getPlayerHead(owner, texturedHead -> {
-            ItemMeta currentMeta = finalDisplayItem.getItemMeta();
-
-            if (currentMeta instanceof SkullMeta && texturedHead.getItemMeta() instanceof SkullMeta) {
-                SkullMeta displaySkullMeta = (SkullMeta) currentMeta;
-                SkullMeta texturedSkullMeta = (SkullMeta) texturedHead.getItemMeta();
-
-                PlayerProfile profileFromTexturedHead = texturedSkullMeta.getPlayerProfile();
-
-                if (profileFromTexturedHead != null) {
-                    displaySkullMeta.setPlayerProfile(profileFromTexturedHead);
-                } else if (texturedSkullMeta.hasOwner()) {
-                    displaySkullMeta.setOwningPlayer(texturedSkullMeta.getOwningPlayer());
-                }
-                finalDisplayItem.setItemMeta(displaySkullMeta);
-            }
-
-            if (inventory != null && inventory.getHolder() == this) {
-                for (int slot = 0; slot < inventory.getSize(); slot++) {
-                    ItemStack itemInSlot = inventory.getItem(slot);
-                    if (itemInSlot != null && itemInSlot.getType() == Material.PLAYER_HEAD &&
-                        Objects.equals(getItemPersistentData(itemInSlot, TARGET_PLAYER_UUID_KEY), owner.getUniqueId().toString()) &&
-                        Objects.equals(getItemPersistentData(itemInSlot, ITEM_ACTION_KEY), getItemPersistentData(itemToTexture, ITEM_ACTION_KEY))) {
-                        inventory.setItem(slot, finalDisplayItem);
-                    }
-                }
-            }
-        });
-        return itemToTexture;
     }
 }

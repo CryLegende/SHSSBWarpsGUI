@@ -18,6 +18,10 @@ Menus des warps d'île SuperiorSkyblock2 : liste, téléportation, nom, icône e
 
 Utilisé sur : **Opale**.
 
+### Têtes de joueurs
+
+Les têtes des menus (une par joueur dans la liste des warps, celle des informations sur l'île) portent le skin du joueur tel que [SHSkins](https://github.com/CryLegende/SHSkins) le connaît : le serveur est en mode hors ligne, et le skin d'un joueur n'est pas celui du compte Mojang du même nom. SHSkins garde les skins en mémoire sur chaque serveur : la tête est complète dès l'ouverture du menu, sans requête réseau ni fichier de cache. Sans SHSkins, ou pour un joueur qu'il ne connaît pas, la tête garde le skin par défaut.
+
 ### Saisies par dialogue natif (clients 1.21.6 et plus)
 
 Depuis le menu de gestion d'un warp (clic droit sur le warp), les saisies qui passaient par le chat s'ouvrent dans une fenêtre Minecraft avec les boutons **Valider** et **Annuler** (Échap annule) :
@@ -58,7 +62,7 @@ L'utilisateur MariaDB de `reseau.base-de-donnees` doit pouvoir créer les trois 
 ## Dépendances
 
 - Obligatoires : `SuperiorSkyblock2`, `Vault`
-- Optionnelles : `PlaceholderAPI`, `ViaVersion`, `SHNetwork` (mode réseau), `SHSkyBridge` (warps d'îles hébergées par un autre serveur)
+- Optionnelles : `PlaceholderAPI`, `ViaVersion`, `SHSkins` (skin des têtes de joueurs), `SHNetwork` (mode réseau), `SHSkyBridge` (warps d'îles hébergées par un autre serveur)
 
 ## Commandes
 
@@ -101,7 +105,7 @@ Fichiers par défaut repris du serveur (secrets remplacés par `CHANGE_ME`). Cli
 
 <pre>
 plugins/SHSSBWarpsGUI/
-├── <a href="src/main/resources/config.yml">config.yml</a>     résumé des commandes et des permissions, menus, mise en avant, favoris, compteur de visites, dialogues (réglages), skins, mode réseau
+├── <a href="src/main/resources/config.yml">config.yml</a>     résumé des commandes et des permissions, menus, mise en avant, favoris, compteur de visites, dialogues (réglages), mode réseau
 └── <a href="src/main/resources/messages.yml">messages.yml</a>   tous les textes : messages, gestion d'un warp, favoris, mise en avant, confirmations, textes des dialogues
 </pre>
 
@@ -118,6 +122,8 @@ mvn clean package
 ```
 
 Le jar est généré dans `target/`.
+
+Le plugin compile contre l'API de SHSkins : le jar de SHSkins doit d'abord être installé dans le dépôt Maven local (`mvn install` dans `SHSkins-Velocity`).
 
 ---
 

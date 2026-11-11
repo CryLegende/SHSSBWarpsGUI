@@ -21,7 +21,6 @@ import org.Cry_Legende.sHSSBWarpsGUI.network.NetworkLink;
 import org.Cry_Legende.sHSSBWarpsGUI.network.NetworkWarps;
 import org.Cry_Legende.sHSSBWarpsGUI.network.ShNetworkLink;
 import org.Cry_Legende.sHSSBWarpsGUI.network.WarpDatabase;
-import org.Cry_Legende.sHSSBWarpsGUI.services.TextureService;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.PlayerChatInput;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -43,7 +42,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
     private ConfigManager configManager;
     // Textes de messages.yml, avec les défauts du jar
     private volatile YamlConfiguration texts;
-    private TextureService textureService;
     private WarpManager warpManager;
     private WarpVisitManager warpVisitManager;
     private FeaturedWarpsManager featuredWarpsManager;
@@ -81,13 +79,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         }
         configManager.loadConfigs();
 
-        File cacheDir = new File(getDataFolder(), "cache");
-        if (!cacheDir.exists()) {
-            if (!cacheDir.mkdirs()) {
-                getLogger().severe("Impossible de créer le répertoire de cache: " + cacheDir.getAbsolutePath());
-            }
-        }
-        this.textureService = new TextureService(this, cacheDir);
         this.featuredWarpsManager = new FeaturedWarpsManager(this, new File(getDataFolder(), "featured_warps.yml"));
 
         // Initialisation du gestionnaire de favoris
@@ -139,9 +130,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
             network.stop();
         }
         // Sauvegarde des données et arrêt des tâches
-        if (textureService != null) {
-            textureService.shutdown();
-        }
         if (featuredWarpsManager != null) {
             featuredWarpsManager.saveFeaturedWarps();
             featuredWarpsManager.stopExpiryCheckTask();
@@ -193,7 +181,7 @@ public class SHSSBWarpsGUI extends JavaPlugin {
     /**
      * Relit config.yml et messages.yml. Les deux sont lus à part et ne remplacent l'état en cours que s'ils sont
      * valides ; sinon l'ancienne configuration reste active. Les fichiers de données (favoris, visites, warps mis en
-     * avant, cache des textures) et la base ne sont pas touchés ; la section reseau ne se recharge pas à chaud.
+     * avant) et la base ne sont pas touchés ; la section reseau ne se recharge pas à chaud.
      */
     public void reload() throws ReloadException {
         String file = "config.yml";
@@ -207,7 +195,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         }
         texts = loaded;
         configManager.loadConfigs();
-        textureService.reloadSettings();
     }
 
     /** Fichier de configuration illisible pendant un reload. */
@@ -272,10 +259,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
 
     public ConfigManager getConfigManager() {
         return configManager;
-    }
-
-    public TextureService getTextureService() {
-        return textureService;
     }
 
     public WarpManager getWarpManager() {

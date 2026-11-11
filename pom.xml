@@ -6,7 +6,7 @@
 
     <groupId>org.Cry_Legende</groupId>
     <artifactId>SHSSBWarpsGUI</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
 
     <name>SHSSBWarpsGUI</name>
@@ -98,12 +98,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.mojang</groupId>
-            <artifactId>authlib</artifactId>
-            <version>1.5.21</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>com.bgsoftware</groupId>
             <artifactId>SuperiorSkyblockAPI</artifactId>
             <version>2024.1</version>
@@ -133,6 +127,13 @@
             <groupId>org.Cry_Legende</groupId>
             <artifactId>SHNetwork</artifactId>
             <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Facultatif à l'exécution (softdepend) : sans lui, les têtes de joueurs gardent le skin par défaut. Jar installé dans le dépôt Maven local (mvn install dans SHSkins-Velocity) -->
+        <dependency>
+            <groupId>org.Cry_Legende</groupId>
+            <artifactId>SHSkins</artifactId>
+            <version>3.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- Chargés par Paper (libraries: de plugin.yml) : le serveur n'embarque que les pilotes MySQL et SQLite -->
