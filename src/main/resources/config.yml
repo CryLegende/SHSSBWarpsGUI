@@ -66,7 +66,7 @@ main-gui:
       name-template: "&C⤾ Retour &7(Clic)"
       lore-template: []
       action: "COMMAND"
-      command: "dm open island"
+      command: "is panel"
       slots: "49"
       click-sound: { sound: "ENTITY_ENDERMAN_TELEPORT", volume: 0.8, pitch: 1.0 }
     bouton_page_suivante:
@@ -185,7 +185,7 @@ player-warps-gui:
     lore-template:
       - ""
       - "&7Durée: &f%feature_duration_formatted%"
-      - "&7Coût: &e%cost% %vault_currency_name_plural%SHCoins"
+      - "&7Coût: &e%cost% %vault_currency_name_plural%"
       - ""
       - "&8&o(( &a&oCliquez pour acheter la mise en avant &8&o))"
     action: "CONFIRM_FEATURE_THIS_WARP" # Action pour le clic sur CE bouton dans le GUI de confirmation
@@ -290,7 +290,7 @@ manage-warp-gui:
         - ""
         - "&7&l« &7Gérer la mise en avant de ce warp &8&l»"
         - ""
-        - "&7Coût: &d%feature_cost% %vault_currency_name_plural%SHCoins"
+        - "&7Coût: &d%feature_cost% %vault_currency_name_plural%"
         - "&7Durée: &f%feature_duration_formatted%"
         - "&7Expire le: &f%feature_expiry_date%"
         - ""
@@ -312,7 +312,7 @@ manage-warp-gui:
 # --- Configuration de la Mise en Avant des Warps ---
 featured-warps:
   enabled: true
-  cost: 50000.0 # Coût pour mettre en avant
+  cost: 1000.0 # Coût pour mettre en avant
   duration: "3d" # Durée de la mise en avant (ex: 7d, 24h, 30m, 1w)
   duration-format: "%d%j, %h%h, %m%m" # Format d'affichage de la durée. %j, %heure_s%, %minute_s% gèrent le pluriel.
   date-format: "dd/MM/yyyy 'à' HH:mm:ss" # Format d'affichage des dates d'expiration
@@ -364,7 +364,7 @@ reseau:
   # Base partagée par tous les serveurs : tables shssbwarps_favorites, shssbwarps_visits et shssbwarps_featured
   # (créées au démarrage) ; l'utilisateur lit aussi island_host, la table de SHSkyBridge
   base-de-donnees:
-    url: "jdbc:mariadb://127.0.0.1:3306/bo_net"
+    url: "jdbc:mariadb://127.0.0.1:3306/minecraft"
     utilisateur: shssbwarpsgui
     mot-de-passe: CHANGE_ME
     # Délai maximal de connexion et de réponse de la base, en millisecondes. Une base qui ne répond pas laisse
@@ -374,4 +374,4 @@ reseau:
     import-termine: "&7&l« &a&lSH &8&l» &7Import terminé : &a%favoris% &7favoris, &a%visites% &7compteurs de visites et &a%mises_en_avant% &7mises en avant copiés dans la base du réseau."
     import-echec: "&7&l« &c&lSH &8&l» &cImport impossible : &7%erreur%"
     import-inactif: "&7&l« &c&lSH &8&l» &cLe mode réseau n'est pas actif sur ce serveur."
-    warp-trop-cher: "&7&l« &c&lSH &8&l» &cIl vous faut &e%cost% SHCoins&c pour vous téléporter à un warp."
+    warp-trop-cher: "&7&l« &c&lSH &8&l» &cIl vous faut &e%cost% pièces&c pour vous téléporter à un warp."
