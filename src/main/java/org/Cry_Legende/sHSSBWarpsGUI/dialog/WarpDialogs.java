@@ -2,6 +2,7 @@ package org.Cry_Legende.sHSSBWarpsGUI.dialog;
 
 import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.island.warps.IslandWarp;
+import org.Cry_Legende.sHSSBWarpsGUI.DialogBlindness;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
 import org.Cry_Legende.sHSSBWarpsGUI.config.ConfigManager;
 import org.Cry_Legende.sHSSBWarpsGUI.utils.ChatUtils;
@@ -28,9 +29,9 @@ public final class WarpDialogs {
     private final SHSSBWarpsGUI plugin;
     private final Dialogs engine;
 
-    public WarpDialogs(SHSSBWarpsGUI plugin) {
+    public WarpDialogs(SHSSBWarpsGUI plugin, DialogBlindness blindness) {
         this.plugin = plugin;
-        this.engine = new Dialogs(plugin);
+        this.engine = new Dialogs(plugin, blindness);
         Bukkit.getPluginManager().registerEvents(engine, plugin);
     }
 

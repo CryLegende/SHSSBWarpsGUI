@@ -52,6 +52,8 @@ public class SHSSBWarpsGUI extends JavaPlugin {
     private PlayerChatInput playerChatInputListener;
     // null sur un serveur sans dialogues (avant 1.21.6) : tout passe alors par le chat
     private WarpDialogs warpDialogs;
+    // Aveugle le joueur tant qu'un dialogue est affiché ; null sur un serveur sans dialogues
+    private DialogBlindness dialogBlindness;
     // Non nul seulement avec SHNetwork : favoris, visites et mises en avant passent par la base commune
     private NetworkWarps network;
 
@@ -146,6 +148,9 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         if (warpDialogs != null) {
             warpDialogs.clear();
         }
+        if (dialogBlindness != null) {
+            dialogBlindness.shutdown();
+        }
         getLogger().info("SHSSBWarpsGUI a été désactivé.");
     }
 
@@ -195,6 +200,9 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         }
         texts = loaded;
         configManager.loadConfigs();
+        if (dialogBlindness != null) {
+            dialogBlindness.setEnabled(getConfig().getBoolean("aveugler-pendant-dialogues", true));
+        }
     }
 
     /** Fichier de configuration illisible pendant un reload. */
@@ -244,7 +252,8 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         // Saisies par dialogue natif (clients 1.21.6+) ; indisponibles avant 1.21.6, le chat reste alors la seule saisie
         try {
             Class.forName("io.papermc.paper.event.player.PlayerCustomClickEvent");
-            this.warpDialogs = new WarpDialogs(this);
+            this.dialogBlindness = new DialogBlindness(this, getConfig().getBoolean("aveugler-pendant-dialogues", true));
+            this.warpDialogs = new WarpDialogs(this, dialogBlindness);
         } catch (ClassNotFoundException | LinkageError e) {
             this.warpDialogs = null;
             getLogger().info("Dialogues indisponibles sur ce serveur : saisie dans le chat.");

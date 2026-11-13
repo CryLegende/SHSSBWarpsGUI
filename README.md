@@ -36,6 +36,8 @@ Les clients plus anciens, ou `dialogues.actif: false`, gardent exactement l'anci
 
 Chaque fenêtre porte un jeton secret à usage unique, valable `dialogues.expiration` secondes : un clic ancien, rejoué, forgé ou venant d'un autre joueur est ignoré.
 
+- **Rendu des fenêtres** : le titre est la première ligne du texte (la barre de titre ne garde que l'icône d'avertissement du client) et le joueur est aveuglé (effet Cécité) tant que la fenêtre est affichée, le texte se lit sur fond noir. L'effet est retiré dès que le joueur tourne la caméra, se déplace ou ouvre un inventaire ; un joueur déjà aveugle pour une autre raison n'est pas touché. Option `aveugler-pendant-dialogues` (`true` par défaut).
+
 ### Mode réseau (plusieurs serveurs Opale)
 
 Avec [SHNetwork](https://github.com/CryLegende/SHNetwork) et `reseau.actif: true` (valeur par défaut), les données que le plugin gardait dans les fichiers de chaque serveur passent par la base commune (`bo_net` en test) et un joueur retrouve les mêmes favoris, les mêmes compteurs et les mêmes warps mis en avant sur tous les serveurs. Sans SHNetwork, ou avec `actif: false`, le plugin fonctionne exactement comme avant : `favorites.yml`, `warp_visits.yml` et `featured_warps.yml` restent la seule source, aucune connexion à la base n'est ouverte.

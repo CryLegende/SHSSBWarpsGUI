@@ -12,7 +12,9 @@ import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import io.papermc.paper.registry.data.dialog.input.TextDialogInput;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.Cry_Legende.sHSSBWarpsGUI.DialogBlindness;
 import org.Cry_Legende.sHSSBWarpsGUI.SHSSBWarpsGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -90,10 +92,12 @@ final class Dialogs implements Listener {
     }
 
     private final SHSSBWarpsGUI plugin;
+    private final DialogBlindness blindness;
     private final Map<UUID, Pending> pending = new ConcurrentHashMap<>();
 
-    Dialogs(SHSSBWarpsGUI plugin) {
+    Dialogs(SHSSBWarpsGUI plugin, DialogBlindness blindness) {
         this.plugin = plugin;
+        this.blindness = blindness;
     }
 
     // ------------------------------------------------------------------ disponibilité
@@ -142,7 +146,7 @@ final class Dialogs implements Listener {
                 return;
             }
             try {
-                player.showDialog(dialog);
+                blindness.show(player, dialog);
             } catch (RuntimeException e) {
                 pending.remove(id, ticket);
                 plugin.getLogger().log(Level.WARNING, "Affichage du dialogue « " + kind + " » impossible pour " + player.getName() + " : " + e, e);
@@ -169,6 +173,7 @@ final class Dialogs implements Listener {
 
     private Dialog build(String kind, String token, Screen screen) {
         List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(LEGACY.deserialize(screen.title()), WIDTH));
         if (screen.error() != null && !screen.error().isEmpty()) {
             body.add(DialogBody.plainMessage(LEGACY.deserialize(screen.error()), WIDTH));
         }
@@ -196,7 +201,8 @@ final class Dialogs implements Listener {
             }
             inputs.add(input.build());
         }
-        DialogBase base = DialogBase.builder(LEGACY.deserialize(screen.title()))
+        // titre vide : l'icône d'avertissement du client reste seule sur sa ligne, le titre est la première ligne du corps
+        DialogBase base = DialogBase.builder(Component.empty())
             .canCloseWithEscape(true)
             // le client ferme l'écran dès le clic ; en cas d'erreur de saisie le plugin en rouvre un nouveau
             .afterAction(DialogBase.DialogAfterAction.CLOSE)
