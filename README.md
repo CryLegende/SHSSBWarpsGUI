@@ -36,7 +36,7 @@ Les clients plus anciens, ou `dialogues.actif: false`, gardent exactement l'anci
 
 Chaque fenêtre porte un jeton secret à usage unique, valable `dialogues.expiration` secondes : un clic ancien, rejoué, forgé ou venant d'un autre joueur est ignoré.
 
-- **Rendu des fenêtres** : le titre est la première ligne du texte (la barre de titre ne garde que l'icône d'avertissement du client) et le joueur est aveuglé (effet Cécité) tant que la fenêtre est affichée, le texte se lit sur fond noir. L'effet est retiré dès que le joueur tourne la caméra, se déplace ou ouvre un inventaire ; un joueur déjà aveugle pour une autre raison n'est pas touché. Option `aveugler-pendant-dialogues` (`true` par défaut).
+- **Rendu des fenêtres** : le titre est la première ligne du texte (la barre de titre ne garde que l'icône d'avertissement du client) et le joueur est aveuglé (effet Cécité) tant que la fenêtre est affichée, le texte se lit sur fond noir. L'effet est retiré dès que le joueur clique un bouton du dialogue, sinon dès qu'il tourne la caméra, se déplace ou ouvre un inventaire ; un joueur déjà aveugle pour une autre raison n'est pas touché. Option `aveugler-pendant-dialogues` (`true` par défaut).
 
 ### Mode réseau (plusieurs serveurs Opale)
 
