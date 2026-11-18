@@ -202,10 +202,9 @@ final class Dialogs implements Listener {
             inputs.add(input.build());
         }
         // titre vide : l'icône d'avertissement du client reste seule sur sa ligne, le titre est la première ligne du corps
-        DialogBase base = DialogBase.builder(Component.empty())
+        DialogBase base = DialogBlindness.stayOpen(DialogBase.builder(Component.empty()))
             .canCloseWithEscape(true)
-            // le client ferme l'écran dès le clic ; en cas d'erreur de saisie le plugin en rouvre un nouveau
-            .afterAction(DialogBase.DialogAfterAction.CLOSE)
+            // gardé ouvert au clic : le dialogue suivant (erreur, écran d'après) le remplace sans clignoter, sinon il est fermé
             .body(body)
             .inputs(inputs)
             .build();
