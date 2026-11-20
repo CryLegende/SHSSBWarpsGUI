@@ -231,14 +231,12 @@ public class FeaturedWarpsManager {
         }
         // Sur le thread principal : la tâche prévient le propriétaire (API Bukkit, PlaceholderAPI) et ne parcourt qu'une petite liste
         expiryCheckTask = new ExpiryCheckTask().runTaskTimer(plugin, 20L * 60, 20L * 60); // Toutes les minutes
-        plugin.getLogger().info("Tâche de vérification d'expiration des warps mis en avant démarrée.");
     }
 
     public void stopExpiryCheckTask() {
         if (expiryCheckTask != null && !expiryCheckTask.isCancelled()) {
             expiryCheckTask.cancel();
             expiryCheckTask = null;
-            plugin.getLogger().info("Tâche de vérification d'expiration des warps mis en avant arrêtée.");
         }
     }
 

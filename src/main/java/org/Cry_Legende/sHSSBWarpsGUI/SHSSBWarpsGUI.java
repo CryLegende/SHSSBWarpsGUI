@@ -95,7 +95,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         registerListeners();
         enableNetwork();
 
-        getLogger().info("SHSSBWarpsGUI a été activé avec succès !");
     }
 
     /**
@@ -151,7 +150,6 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         if (dialogBlindness != null) {
             dialogBlindness.shutdown();
         }
-        getLogger().info("SHSSBWarpsGUI a été désactivé.");
     }
 
     /**
@@ -162,12 +160,10 @@ public class SHSSBWarpsGUI extends JavaPlugin {
         if (!vaultHook.setupEconomy()) {
             getLogger().warning("Vault n'a pas pu être hook ou aucune économie n'a été trouvée.");
         } else {
-            getLogger().info("Vault détecté et hooké avec succès.");
         }
 
         this.papiHook = new PAPIHook();
         if (papiHook.isEnabled()) {
-            getLogger().info("PlaceholderAPI détecté et hooké.");
         } else {
             getLogger().info("PlaceholderAPI non détecté.");
         }
